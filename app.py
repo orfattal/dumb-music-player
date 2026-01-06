@@ -171,31 +171,6 @@ def index():
     return render_template('index.html', songs=data['songs'])
 
 
-@app.route('/search', methods=['GET', 'POST'])
-def public_search():
-    """Public search for songs."""
-    if request.method == 'POST':
-        song_name = request.form.get('song_name')
-        artist_name = request.form.get('artist_name')
-
-        if not song_name or not artist_name:
-            return render_template('public_search.html', error='נא למלא שם שיר ושם אמן')
-
-        # Search YouTube
-        search_results = search_youtube(song_name, artist_name)
-
-        if not search_results:
-            return render_template('public_search.html', error='לא נמצא שיר ביוטיוב')
-
-        # Show search results
-        return render_template('public_search_results.html',
-                             results=search_results,
-                             song_name=song_name,
-                             artist_name=artist_name)
-
-    return render_template('public_search.html')
-
-
 @app.route('/download/<int:song_id>')
 def download_song(song_id):
     """Download a specific song as MP3."""
@@ -326,8 +301,6 @@ def admin_download_song():
     data = load_data()
     data['songs'].append({
         'display_name': youtube_title,
-        'search_name': song_name,
-        'search_artist': artist_name,
         'filename': filename,
         'youtube_url': youtube_url,
         'thumbnail': thumbnail_filename if thumbnail_path.exists() else None

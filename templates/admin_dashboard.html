@@ -28,8 +28,6 @@
                 </td>
                 <td valign="top">
                     <strong>{{ song.display_name }}</strong>
-                    <br>
-                    <small>חיפוש: {{ song.search_name }} - {{ song.search_artist }}</small>
                     <br><br>
                     <a href="{{ url_for('admin_edit_song', song_id=loop.index0) }}" class="button">ערוך</a>
                     <form method="POST" action="{{ url_for('admin_delete_song', song_id=loop.index0) }}" style="display:inline;">

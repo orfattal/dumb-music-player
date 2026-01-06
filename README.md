@@ -10,16 +10,16 @@ A lightweight web app optimized for Nokia 215 Opera Mini browser that allows use
 - ממשק פשוט ללא JavaScript, מותאם ל-Opera Mini
 - רשימת שירים עם שמות כפי שהם מופיעים ביוטיוב
 - תמונות ממוזערות (thumbnails) ליד כל שיר
-- חיפוש חופשי ביוטיוב עם תצוגה מקדימה
 - הורדת שירים כקבצי MP3
 - אין צורך בהתחברות למשתמשי קצה
+- רק המנהל יכול להוסיף שירים
 
 - Simple, minimal JavaScript interface optimized for Opera Mini
 - Flat list of songs with names as they appear on YouTube
 - Thumbnails displayed next to each song
-- Free YouTube search with preview
 - Download songs as MP3 files
 - No login required for end users
+- Only admin can add songs
 
 ### ממשק ניהול / Admin Backend
 - ממשק ניהול מוגן בסיסמה
@@ -121,15 +121,32 @@ dumb-music-player/
 ├── requirements.txt       # Python dependencies
 ├── data.json             # Songs database (auto-created)
 ├── downloads/            # MP3 files storage (auto-created)
+├── static/
+│   └── thumbnails/       # YouTube thumbnail images
 ├── templates/            # HTML templates (Hebrew)
 │   ├── base.html
 │   ├── index.html
 │   ├── admin_login.html
 │   ├── admin_dashboard.html
 │   ├── admin_add_song.html
-│   └── admin_edit_song.html
+│   ├── admin_edit_song.html
+│   └── admin_search_results.html
 └── .env                  # Environment variables
 ```
+
+## Data Structure
+
+Each song in `data.json` has:
+```json
+{
+  "display_name": "Song Title as it appears on YouTube",
+  "filename": "song-file.mp3",
+  "youtube_url": "https://www.youtube.com/watch?v=...",
+  "thumbnail": "video_id.jpg"
+}
+```
+
+No search terms are stored - only the final song information.
 
 ## YouTube Authentication (Optional)
 

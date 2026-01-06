@@ -7,10 +7,6 @@
     <h1>שירים</h1>
 </div>
 
-<div style="margin: 15px 0; text-align: center;">
-    <a href="{{ url_for('public_search') }}" class="button" style="display: inline-block; padding: 10px 20px; font-size: 16px;">🔍 חפש שיר חדש ביוטיוב</a>
-</div>
-
 {% if songs %}
     {% for song in songs %}
     <div class="song-item">
