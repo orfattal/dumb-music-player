@@ -98,12 +98,13 @@ def download_from_youtube(youtube_url, output_path):
         ydl_opts['cookiefile'] = str(cookies_file)
         print(f"Using cookies from: {cookies_file}")
     else:
-        # Try to use cookies from browser
+        # Try to use cookies from browser (only works locally with Chrome installed)
         try:
             ydl_opts['cookiesfrombrowser'] = ('chrome',)
             print("Attempting to use cookies from Chrome browser")
-        except:
-            print("Warning: No cookies available, downloads may fail for some videos")
+        except Exception as e:
+            print(f"Warning: Could not load browser cookies: {e}")
+            print("Tip: Export cookies to cookies.txt file for reliable downloads")
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
