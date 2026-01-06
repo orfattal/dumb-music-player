@@ -27,32 +27,23 @@ DATA_FILE = Path('data.json')
 
 # Initialize data file
 if not DATA_FILE.exists():
-    DATA_FILE.write_text(json.dumps({'playlists': []}, indent=2))
+    DATA_FILE.write_text(json.dumps({'songs': []}, indent=2))
 
 
 def load_data():
-    """Load playlists data from JSON file."""
+    """Load songs data from JSON file."""
     with open(DATA_FILE, 'r') as f:
         return json.load(f)
 
 
 def save_data(data):
-    """Save playlists data to JSON file."""
+    """Save songs data to JSON file."""
     with open(DATA_FILE, 'w') as f:
-        json.dump(data, f, indent=2)
-
-
-def extract_apple_music_playlist_id(url):
-    """Extract playlist ID from Apple Music URL."""
-    # Apple Music playlist URL format: https://music.apple.com/*/playlist/*/pl.*
-    match = re.search(r'pl\.[a-zA-Z0-9-]+', url)
-    if match:
-        return match.group(0)
-    return None
+        json.dump(data, f, indent=2, ensure_ascii=False)
 
 
 def search_youtube(song_name, artist_name):
-    """Search YouTube for a song and return the first result URL."""
+    """Search YouTube for a song and return the first result URL and title."""
     query = f"{song_name} {artist_name} official audio"
 
     ydl_opts = {
@@ -66,11 +57,13 @@ def search_youtube(song_name, artist_name):
             result = ydl.extract_info(f"ytsearch1:{query}", download=False)
             if result and 'entries' in result and len(result['entries']) > 0:
                 video = result['entries'][0]
-                return f"https://www.youtube.com/watch?v={video['id']}"
+                url = f"https://www.youtube.com/watch?v={video['id']}"
+                title = video.get('title', f"{song_name} - {artist_name}")
+                return url, title
     except Exception as e:
         print(f"Error searching YouTube: {e}")
 
-    return None
+    return None, None
 
 
 def download_from_youtube(youtube_url, output_path):
@@ -145,56 +138,28 @@ def download_from_youtube(youtube_url, output_path):
     return False
 
 
-def parse_apple_music_playlist(url):
-    """
-    Parse Apple Music playlist URL and return list of songs.
-    Note: This is a simplified version. Real implementation would need
-    Apple Music API or web scraping.
-    """
-    # This is a placeholder - in production, you'd use Apple Music API
-    # or scrape the webpage
-    return []
-
-
 # ============ PUBLIC ROUTES ============
 
 @app.route('/')
 def index():
-    """Public homepage showing all playlists."""
+    """Public homepage showing all songs."""
     data = load_data()
-    return render_template('index.html', playlists=data['playlists'])
+    return render_template('index.html', songs=data['songs'])
 
 
-@app.route('/playlist/<int:playlist_id>')
-def view_playlist(playlist_id):
-    """View songs in a specific playlist."""
-    data = load_data()
-
-    if playlist_id >= len(data['playlists']):
-        return "Playlist not found", 404
-
-    playlist = data['playlists'][playlist_id]
-    return render_template('playlist.html', playlist=playlist, playlist_id=playlist_id)
-
-
-@app.route('/download/<int:playlist_id>/<int:song_id>')
-def download_song(playlist_id, song_id):
+@app.route('/download/<int:song_id>')
+def download_song(song_id):
     """Download a specific song as MP3."""
     data = load_data()
 
-    if playlist_id >= len(data['playlists']):
-        return "Playlist not found", 404
+    if song_id >= len(data['songs']):
+        return "שיר לא נמצא", 404
 
-    playlist = data['playlists'][playlist_id]
-
-    if song_id >= len(playlist['songs']):
-        return "Song not found", 404
-
-    song = playlist['songs'][song_id]
+    song = data['songs'][song_id]
     file_path = DOWNLOADS_DIR / song['filename']
 
     if not file_path.exists():
-        return "File not found", 404
+        return "קובץ לא נמצא", 404
 
     return send_file(
         file_path,
@@ -223,7 +188,7 @@ def admin_login_post():
         session['admin'] = True
         return redirect(url_for('admin_dashboard'))
 
-    return render_template('admin_login.html', error='Invalid password')
+    return render_template('admin_login.html', error='סיסמה שגויה')
 
 
 @app.route('/admin/logout')
@@ -235,68 +200,32 @@ def admin_logout():
 
 @app.route('/admin/dashboard')
 def admin_dashboard():
-    """Admin dashboard showing all playlists."""
+    """Admin dashboard showing all songs."""
     if 'admin' not in session:
         return redirect(url_for('admin_login'))
 
     data = load_data()
-    return render_template('admin_dashboard.html', playlists=data['playlists'])
+    return render_template('admin_dashboard.html', songs=data['songs'])
 
 
-@app.route('/admin/add-playlist', methods=['GET', 'POST'])
-def admin_add_playlist():
-    """Add a new playlist from Apple Music URL."""
+@app.route('/admin/add-song', methods=['GET', 'POST'])
+def admin_add_song():
+    """Add a new song."""
     if 'admin' not in session:
         return redirect(url_for('admin_login'))
-
-    if request.method == 'POST':
-        playlist_url = request.form.get('playlist_url')
-        playlist_name = request.form.get('playlist_name')
-
-        if not playlist_url or not playlist_name:
-            return render_template('admin_add_playlist.html', error='Please provide both URL and name')
-
-        # For now, create empty playlist - songs will be added manually
-        data = load_data()
-        data['playlists'].append({
-            'name': playlist_name,
-            'url': playlist_url,
-            'songs': []
-        })
-        save_data(data)
-
-        return redirect(url_for('admin_dashboard'))
-
-    return render_template('admin_add_playlist.html')
-
-
-@app.route('/admin/playlist/<int:playlist_id>/add-song', methods=['GET', 'POST'])
-def admin_add_song(playlist_id):
-    """Add a song to a playlist."""
-    if 'admin' not in session:
-        return redirect(url_for('admin_login'))
-
-    data = load_data()
-
-    if playlist_id >= len(data['playlists']):
-        return "Playlist not found", 404
 
     if request.method == 'POST':
         song_name = request.form.get('song_name')
         artist_name = request.form.get('artist_name')
 
         if not song_name or not artist_name:
-            return render_template('admin_add_song.html',
-                                 playlist_id=playlist_id,
-                                 error='Please provide both song and artist name')
+            return render_template('admin_add_song.html', error='נא למלא שם שיר ושם אמן')
 
         # Search YouTube
-        youtube_url = search_youtube(song_name, artist_name)
+        youtube_url, youtube_title = search_youtube(song_name, artist_name)
 
         if not youtube_url:
-            return render_template('admin_add_song.html',
-                                 playlist_id=playlist_id,
-                                 error='Could not find song on YouTube')
+            return render_template('admin_add_song.html', error='לא נמצא שיר ביוטיוב')
 
         # Generate filename
         safe_name = re.sub(r'[^\w\s-]', '', f"{song_name}-{artist_name}")
@@ -308,14 +237,14 @@ def admin_add_song(playlist_id):
         success = download_from_youtube(youtube_url, output_path)
 
         if not success:
-            return render_template('admin_add_song.html',
-                                 playlist_id=playlist_id,
-                                 error='Failed to download from YouTube')
+            return render_template('admin_add_song.html', error='שגיאה בהורדה מיוטיוב')
 
-        # Add to playlist
-        data['playlists'][playlist_id]['songs'].append({
-            'name': song_name,
-            'artist': artist_name,
+        # Add to songs list
+        data = load_data()
+        data['songs'].append({
+            'display_name': youtube_title,
+            'search_name': song_name,
+            'search_artist': artist_name,
             'filename': filename,
             'youtube_url': youtube_url
         })
@@ -323,52 +252,49 @@ def admin_add_song(playlist_id):
 
         return redirect(url_for('admin_dashboard'))
 
-    return render_template('admin_add_song.html', playlist_id=playlist_id)
+    return render_template('admin_add_song.html')
 
 
-@app.route('/admin/playlist/<int:playlist_id>/delete', methods=['POST'])
-def admin_delete_playlist(playlist_id):
-    """Delete a playlist and its songs."""
+@app.route('/admin/song/<int:song_id>/edit', methods=['GET', 'POST'])
+def admin_edit_song(song_id):
+    """Edit a song's display name."""
     if 'admin' not in session:
         return redirect(url_for('admin_login'))
 
     data = load_data()
 
-    if playlist_id >= len(data['playlists']):
-        return "Playlist not found", 404
+    if song_id >= len(data['songs']):
+        return "שיר לא נמצא", 404
 
-    playlist = data['playlists'][playlist_id]
+    song = data['songs'][song_id]
 
-    # Delete all song files
-    for song in playlist['songs']:
-        file_path = DOWNLOADS_DIR / song['filename']
-        if file_path.exists():
-            file_path.unlink()
+    if request.method == 'POST':
+        new_name = request.form.get('display_name')
 
-    # Remove from data
-    data['playlists'].pop(playlist_id)
-    save_data(data)
+        if not new_name:
+            return render_template('admin_edit_song.html', song=song, song_id=song_id, error='נא למלא שם')
 
-    return redirect(url_for('admin_dashboard'))
+        # Update song name
+        data['songs'][song_id]['display_name'] = new_name
+        save_data(data)
+
+        return redirect(url_for('admin_dashboard'))
+
+    return render_template('admin_edit_song.html', song=song, song_id=song_id)
 
 
-@app.route('/admin/song/<int:playlist_id>/<int:song_id>/delete', methods=['POST'])
-def admin_delete_song(playlist_id, song_id):
-    """Delete a song from a playlist."""
+@app.route('/admin/song/<int:song_id>/delete', methods=['POST'])
+def admin_delete_song(song_id):
+    """Delete a song."""
     if 'admin' not in session:
         return redirect(url_for('admin_login'))
 
     data = load_data()
 
-    if playlist_id >= len(data['playlists']):
-        return "Playlist not found", 404
+    if song_id >= len(data['songs']):
+        return "שיר לא נמצא", 404
 
-    playlist = data['playlists'][playlist_id]
-
-    if song_id >= len(playlist['songs']):
-        return "Song not found", 404
-
-    song = playlist['songs'][song_id]
+    song = data['songs'][song_id]
 
     # Delete file
     file_path = DOWNLOADS_DIR / song['filename']
@@ -376,7 +302,7 @@ def admin_delete_song(playlist_id, song_id):
         file_path.unlink()
 
     # Remove from data
-    playlist['songs'].pop(song_id)
+    data['songs'].pop(song_id)
     save_data(data)
 
     return redirect(url_for('admin_dashboard'))

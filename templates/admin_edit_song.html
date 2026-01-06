@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}ערוך שיר{% endblock %}
+
+{% block content %}
+<div class="nav">
+    <a href="{{ url_for('admin_dashboard') }}">&lt; חזרה לניהול</a>
+</div>
+
+<h1>ערוך שיר</h1>
+
+{% if error %}
+<div class="error">{{ error }}</div>
+{% endif %}
+
+<form method="POST">
+    <label>שם להצגה:</label>
+    <input type="text" name="display_name" required value="{{ song.display_name }}">
+
+    <br>
+    <button type="submit" class="button">שמור</button>
+</form>
+
+<br>
+<p><small>חיפוש מקורי: {{ song.search_name }} - {{ song.search_artist }}</small></p>
+{% endblock %}

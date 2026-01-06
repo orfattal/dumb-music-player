@@ -1,45 +1,33 @@
 {% extends "base.html" %}
 
-{% block title %}Admin Dashboard{% endblock %}
+{% block title %}ניהול{% endblock %}
 
 {% block content %}
 <div class="nav">
-    <a href="{{ url_for('index') }}">&lt; Home</a> |
-    <a href="{{ url_for('admin_logout') }}">Logout</a>
+    <a href="{{ url_for('index') }}">&lt; דף הבית</a> |
+    <a href="{{ url_for('admin_logout') }}">התנתק</a>
 </div>
 
-<h1>Admin Dashboard</h1>
+<h1>ניהול שירים</h1>
 
-<a href="{{ url_for('admin_add_playlist') }}" class="button">+ Add New Playlist</a>
+<a href="{{ url_for('admin_add_song') }}" class="button">+ הוסף שיר חדש</a>
 
-<h2>Playlists</h2>
+<h2>שירים</h2>
 
-{% if playlists %}
-    {% for playlist in playlists %}
-    <div class="playlist-item">
-        <h3>{{ playlist.name }}</h3>
-        <p>{{ playlist.songs|length }} songs</p>
-
-        {% if playlist.songs %}
-        <h4>Songs:</h4>
-        {% for song in playlist.songs %}
-        <div class="song-item">
-            <strong>{{ song.name }}</strong> - {{ song.artist }}
-            <form method="POST" action="{{ url_for('admin_delete_song', playlist_id=loop.index0, song_id=loop.index0) }}" style="display:inline;">
-                <button type="submit" class="button button-danger">Delete</button>
-            </form>
-        </div>
-        {% endfor %}
-        {% endif %}
-
-        <a href="{{ url_for('admin_add_song', playlist_id=loop.index0) }}" class="button">+ Add Song</a>
-
-        <form method="POST" action="{{ url_for('admin_delete_playlist', playlist_id=loop.index0) }}" style="display:inline;">
-            <button type="submit" class="button button-danger">Delete Playlist</button>
+{% if songs %}
+    {% for song in songs %}
+    <div class="song-item">
+        <strong>{{ song.display_name }}</strong>
+        <br>
+        <small>חיפוש: {{ song.search_name }} - {{ song.search_artist }}</small>
+        <br>
+        <a href="{{ url_for('admin_edit_song', song_id=loop.index0) }}" class="button">ערוך</a>
+        <form method="POST" action="{{ url_for('admin_delete_song', song_id=loop.index0) }}" style="display:inline;">
+            <button type="submit" class="button button-danger" onclick="return confirm('למחוק את השיר?')">מחק</button>
         </form>
     </div>
     {% endfor %}
 {% else %}
-    <p>No playlists yet.</p>
+    <p>אין שירים עדיין.</p>
 {% endif %}
 {% endblock %}

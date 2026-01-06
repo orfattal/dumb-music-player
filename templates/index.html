@@ -1,24 +1,24 @@
 {% extends "base.html" %}
 
-{% block title %}Music Playlists{% endblock %}
+{% block title %}שירים{% endblock %}
 
 {% block content %}
 <div class="nav">
-    <h1>Music Playlists</h1>
+    <h1>שירים</h1>
 </div>
 
-{% if playlists %}
-    {% for playlist in playlists %}
-    <div class="playlist-item">
-        <h2>{{ playlist.name }}</h2>
-        <p>{{ playlist.songs|length }} songs</p>
-        <a href="{{ url_for('view_playlist', playlist_id=loop.index0) }}" class="button">View Songs</a>
+{% if songs %}
+    {% for song in songs %}
+    <div class="song-item">
+        <strong>{{ song.display_name }}</strong>
+        <br>
+        <a href="{{ url_for('download_song', song_id=loop.index0) }}" class="button">הורד MP3</a>
     </div>
     {% endfor %}
 {% else %}
-    <p>No playlists available yet.</p>
+    <p>אין שירים עדיין.</p>
 {% endif %}
 
 <br><br>
-<a href="{{ url_for('admin_login') }}">Admin Login</a>
+<a href="{{ url_for('admin_login') }}">כניסת מנהל</a>
 {% endblock %}

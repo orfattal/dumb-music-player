@@ -1,22 +1,34 @@
-# Dumb Music Player
+# נגן מוזיקה פשוט / Dumb Music Player
 
-A lightweight web app optimized for Nokia 215 Opera Mini browser that allows users to browse playlists and download MP3s.
+אפליקציית ווב קלת משקל המותאמת לדפדפן Opera Mini בנוקיה 215, מאפשרת למשתמשים לצפות ברשימת שירים ולהוריד MP3.
 
-## Features
+A lightweight web app optimized for Nokia 215 Opera Mini browser that allows users to browse songs and download MP3s.
 
-### Public Interface
+## תכונות / Features
+
+### ממשק ציבורי / Public Interface
+- ממשק פשוט ללא JavaScript, מותאם ל-Opera Mini
+- רשימת שירים עם שמות כפי שהם מופיעים ביוטיוב
+- הורדת שירים כקבצי MP3
+- אין צורך בהתחברות למשתמשי קצה
+
 - Simple, no-JavaScript interface optimized for Opera Mini
-- Browse available playlists
-- View songs in each playlist
+- Flat list of songs with names as they appear on YouTube
 - Download songs as MP3 files
 - No login required for end users
 
-### Admin Backend
+### ממשק ניהול / Admin Backend
+- ממשק ניהול מוגן בסיסמה
+- הוספת שירים: חיפוש והורדה אוטומטית מיוטיוב
+- עריכת שמות שירים
+- מחיקת שירים
+- הכל בעברית
+
 - Password-protected admin interface
-- Create playlists from Apple Music URLs
-- Search and download songs from YouTube automatically
-- Manage playlists and songs
-- Delete unwanted content
+- Add songs: search and download automatically from YouTube
+- Edit song names
+- Delete songs
+- Hebrew interface
 
 ## Prerequisites
 
@@ -80,17 +92,21 @@ pip install gunicorn
 gunicorn -w 4 -b 0.0.0.0:5000 app:app
 ```
 
-## Admin Workflow
+## Admin Workflow / תהליך ניהול
 
-1. Go to `/admin` and log in with your password
-2. Click "Add New Playlist"
-3. Enter a playlist name and Apple Music URL (URL is stored but not parsed automatically)
-4. Click "Add Song" for the playlist
-5. Enter song name and artist name
-6. The app will:
+1. עבור ל-`/admin` והתחבר עם הסיסמה שלך / Go to `/admin` and log in with your password
+2. לחץ "הוסף שיר חדש" / Click "הוסף שיר חדש" (Add New Song)
+3. הזן שם שיר ושם אמן / Enter song name and artist name
+4. האפליקציה תבצע:
+   - חיפוש ביוטיוב
+   - הורדה כ-MP3
+   - הוספה לרשימת השירים עם השם כפי שהוא מופיע ביוטיוב
+
+   The app will:
    - Search YouTube for the song
    - Download it as MP3
-   - Add it to your playlist
+   - Add it to the song list with the name as it appears on YouTube
+5. ערוך את השם לפי הצורך / Edit the name if needed
 
 ## Project Structure
 
@@ -98,16 +114,15 @@ gunicorn -w 4 -b 0.0.0.0:5000 app:app
 dumb-music-player/
 ├── app.py                 # Main Flask application
 ├── requirements.txt       # Python dependencies
-├── data.json             # Playlist database (auto-created)
+├── data.json             # Songs database (auto-created)
 ├── downloads/            # MP3 files storage (auto-created)
-├── templates/            # HTML templates
+├── templates/            # HTML templates (Hebrew)
 │   ├── base.html
 │   ├── index.html
-│   ├── playlist.html
 │   ├── admin_login.html
 │   ├── admin_dashboard.html
-│   ├── admin_add_playlist.html
-│   └── admin_add_song.html
+│   ├── admin_add_song.html
+│   └── admin_edit_song.html
 └── .env                  # Environment variables
 ```
 
@@ -132,12 +147,13 @@ The app tries multiple strategies in order:
 2. Chrome browser cookies (if Chrome is installed)
 3. No authentication (works for most public videos)
 
-## Notes
+## Notes / הערות
 
-- **Apple Music API**: Currently, playlists are created manually. To automatically parse Apple Music playlists, you would need to implement proper Apple Music API integration or web scraping.
-- **Opera Mini Optimization**: The UI uses minimal CSS, no JavaScript, and simple HTML that works well on feature phones.
-- **YouTube Downloads**: Uses yt-dlp to search and download from YouTube. Make sure this complies with YouTube's Terms of Service in your jurisdiction.
-- **Storage**: MP3 files are stored in the `downloads/` directory. Make sure you have enough disk space.
+- **Hebrew Interface / ממשק עברי**: All UI text is in Hebrew with RTL support for optimal viewing.
+- **Opera Mini Optimization / אופטימיזציה ל-Opera Mini**: The UI uses minimal CSS, no JavaScript, and simple HTML that works well on feature phones.
+- **YouTube Downloads / הורדות מיוטיוב**: Uses yt-dlp to search and download from YouTube. Make sure this complies with YouTube's Terms of Service in your jurisdiction.
+- **Storage / אחסון**: MP3 files are stored in the `downloads/` directory. Make sure you have enough disk space.
+- **Song Names / שמות שירים**: Songs are initially named as they appear on YouTube, but can be edited through the admin interface.
 
 ## License
 

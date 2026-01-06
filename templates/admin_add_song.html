@@ -1,29 +1,29 @@
 {% extends "base.html" %}
 
-{% block title %}Add Song{% endblock %}
+{% block title %}הוסף שיר{% endblock %}
 
 {% block content %}
 <div class="nav">
-    <a href="{{ url_for('admin_dashboard') }}">&lt; Back to Dashboard</a>
+    <a href="{{ url_for('admin_dashboard') }}">&lt; חזרה לניהול</a>
 </div>
 
-<h1>Add Song to Playlist</h1>
+<h1>הוסף שיר חדש</h1>
 
 {% if error %}
 <div class="error">{{ error }}</div>
 {% endif %}
 
 <form method="POST">
-    <label>Song Name:</label>
+    <label>שם השיר:</label>
     <input type="text" name="song_name" required placeholder="Shape of You">
 
-    <label>Artist Name:</label>
+    <label>שם האמן:</label>
     <input type="text" name="artist_name" required placeholder="Ed Sheeran">
 
     <br>
-    <button type="submit" class="button">Search & Download</button>
+    <button type="submit" class="button">חפש והורד</button>
 </form>
 
 <br>
-<p><small>This will search YouTube and download the song automatically.</small></p>
+<p><small>השיר יחופש ויורד אוטומטית מיוטיוב.</small></p>
 {% endblock %}
