@@ -75,6 +75,10 @@ def search_youtube(song_name, artist_name):
 
 def download_from_youtube(youtube_url, output_path):
     """Download audio from YouTube as MP3."""
+
+    # Check if cookies file exists
+    cookies_file = Path('cookies.txt')
+
     ydl_opts = {
         'format': 'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best',
         'postprocessors': [{
@@ -88,6 +92,18 @@ def download_from_youtube(youtube_url, output_path):
         'writethumbnail': False,
         'extract_audio': True,
     }
+
+    # Add cookies if file exists
+    if cookies_file.exists():
+        ydl_opts['cookiefile'] = str(cookies_file)
+        print(f"Using cookies from: {cookies_file}")
+    else:
+        # Try to use cookies from browser
+        try:
+            ydl_opts['cookiesfrombrowser'] = ('chrome',)
+            print("Attempting to use cookies from Chrome browser")
+        except:
+            print("Warning: No cookies available, downloads may fail for some videos")
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:

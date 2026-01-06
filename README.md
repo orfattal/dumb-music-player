@@ -111,6 +111,21 @@ dumb-music-player/
 └── .env                  # Environment variables
 ```
 
+## YouTube Authentication (Important!)
+
+YouTube now requires authentication for downloads. You need to provide cookies:
+
+**Option 1: Use browser cookies (automatic - Chrome only)**
+The app will try to use cookies from your Chrome browser automatically.
+
+**Option 2: Export cookies manually**
+1. Install a browser extension like "Get cookies.txt" for Chrome/Firefox
+2. Visit youtube.com and make sure you're logged in
+3. Click the extension and export cookies
+4. Save as `cookies.txt` in the project root directory
+
+**Note**: The app will try Chrome browser cookies first, then fall back to cookies.txt if it exists.
+
 ## Notes
 
 - **Apple Music API**: Currently, playlists are created manually. To automatically parse Apple Music playlists, you would need to implement proper Apple Music API integration or web scraping.
