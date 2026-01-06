@@ -50,7 +50,45 @@
     <button type="submit" class="button" id="downloadButton" onclick="return prepareDownload()">הורד את השיר הנבחר</button>
 </form>
 
+<!-- Loading Overlay -->
+<div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; text-align: center;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); max-width: 400px;">
+        <h2 style="margin: 0 0 10px 0; color: #333;">⏳ מוריד מיוטיוב...</h2>
+        <p style="margin: 0; color: #666;">נא להמתין, זה עשוי לקחת כמה דקות</p>
+        <p style="margin: 10px 0 0 0; color: #999; font-size: 14px;">הורדת הקובץ והמרה ל-MP3...</p>
+        <div id="overlayTimer" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+            <p style="margin: 0 0 10px 0; color: #e67e22; font-size: 14px;">ההורדה לוקחת יותר זמן מהצפוי...</p>
+            <button onclick="dismissOverlay()" style="padding: 10px 20px; background: #e74c3c; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">✕ סגור ובדוק מאוחר יותר</button>
+            <p style="margin: 10px 0 0 0; color: #999; font-size: 12px;">השיר עדיין מתעבד ברקע</p>
+        </div>
+    </div>
+</div>
+
 <script>
+var downloadTimer = null;
+
+// Hide overlay on page load (in case of error/page reload)
+window.onload = function() {
+    var overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+        overlay.style.display = 'none';
+    }
+    // Clear timer if exists
+    if (downloadTimer) {
+        clearTimeout(downloadTimer);
+        downloadTimer = null;
+    }
+};
+
+function dismissOverlay() {
+    document.getElementById('loadingOverlay').style.display = 'none';
+    if (downloadTimer) {
+        clearTimeout(downloadTimer);
+        downloadTimer = null;
+    }
+    alert('ההורדה עדיין מתבצעת ברקע. אם השיר לא מופיע תוך דקות אחדות, נסה שוב.');
+}
+
 function prepareDownload() {
     var selected = document.querySelector('input[name="selected_video"]:checked');
     if (!selected) {
@@ -79,10 +117,18 @@ function prepareDownload() {
     thumbInput.value = selected.dataset.thumbnail;
     form.appendChild(thumbInput);
 
-    // Disable button to prevent double submission
+    // Show loading overlay
+    document.getElementById('loadingOverlay').style.display = 'block';
     var btn = document.getElementById('downloadButton');
     btn.disabled = true;
-    btn.innerHTML = '⏳ מתחיל הורדה...';
+
+    // After 30 seconds, show close button
+    downloadTimer = setTimeout(function() {
+        var timer = document.getElementById('overlayTimer');
+        if (timer) {
+            timer.style.display = 'block';
+        }
+    }, 30000); // 30 seconds
 
     return true;
 }
