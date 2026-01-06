@@ -93,43 +93,56 @@ def download_from_youtube(youtube_url, output_path):
         'extract_audio': True,
     }
 
-    # Add cookies if file exists
-    if cookies_file.exists():
-        ydl_opts['cookiefile'] = str(cookies_file)
-        print(f"Using cookies from: {cookies_file}")
-    else:
-        # Try to use cookies from browser (only works locally with Chrome installed)
-        try:
-            ydl_opts['cookiesfrombrowser'] = ('chrome',)
-            print("Attempting to use cookies from Chrome browser")
-        except Exception as e:
-            print(f"Warning: Could not load browser cookies: {e}")
-            print("Tip: Export cookies to cookies.txt file for reliable downloads")
+    # Try multiple strategies for cookie authentication
+    strategies = []
 
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+    # Strategy 1: Use cookies.txt if it exists
+    if cookies_file.exists():
+        strategy_opts = ydl_opts.copy()
+        strategy_opts['cookiefile'] = str(cookies_file)
+        strategies.append(("cookies.txt file", strategy_opts))
+
+    # Strategy 2: Try Chrome browser cookies (only works locally)
+    chrome_check = Path.home() / '.config' / 'google-chrome'
+    if chrome_check.exists() or Path('/Applications/Google Chrome.app').exists():
+        strategy_opts = ydl_opts.copy()
+        strategy_opts['cookiesfrombrowser'] = ('chrome',)
+        strategies.append(("Chrome browser cookies", strategy_opts))
+
+    # Strategy 3: Try without cookies (fallback)
+    strategies.append(("no authentication", ydl_opts.copy()))
+
+    # Try each strategy until one works
+    for strategy_name, opts in strategies:
+        try:
+            print(f"Attempting download using {strategy_name}...")
             print(f"Downloading from: {youtube_url}")
             print(f"Output path: {output_path}")
-            info = ydl.extract_info(youtube_url, download=True)
 
-        # Check if the mp3 file was created
-        if output_path.exists():
-            print(f"✓ File created successfully: {output_path}")
-            return True
-        else:
-            print(f"✗ File not created at expected path: {output_path}")
-            # Check if file exists without extension
-            base_path = output_path.with_suffix('')
-            if base_path.exists():
-                print(f"Found file without .mp3 extension, renaming...")
-                base_path.rename(output_path)
+            with yt_dlp.YoutubeDL(opts) as ydl:
+                info = ydl.extract_info(youtube_url, download=True)
+
+            # Check if the mp3 file was created
+            if output_path.exists():
+                print(f"✓ File created successfully: {output_path}")
                 return True
-            return False
-    except Exception as e:
-        print(f"Error downloading from YouTube: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
+            else:
+                print(f"✗ File not created at expected path: {output_path}")
+                # Check if file exists without extension
+                base_path = output_path.with_suffix('')
+                if base_path.exists():
+                    print(f"Found file without .mp3 extension, renaming...")
+                    base_path.rename(output_path)
+                    return True
+        except Exception as e:
+            print(f"Strategy '{strategy_name}' failed: {e}")
+            # Continue to next strategy
+            continue
+
+    # All strategies failed
+    print(f"Error: All download strategies failed for {youtube_url}")
+    print("Tip: For better reliability, export YouTube cookies to cookies.txt file")
+    return False
 
 
 def parse_apple_music_playlist(url):

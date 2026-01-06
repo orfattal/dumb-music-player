@@ -111,20 +111,26 @@ dumb-music-player/
 └── .env                  # Environment variables
 ```
 
-## YouTube Authentication (Important!)
+## YouTube Authentication (Optional)
 
-YouTube now requires authentication for downloads. You need to provide cookies:
+The app will attempt to download YouTube videos without authentication first, which works for most public videos. However, some videos may require authentication.
 
-**Option 1: Use browser cookies (automatic - Chrome only)**
-The app will try to use cookies from your Chrome browser automatically.
+**If downloads fail**, you can provide YouTube cookies:
 
-**Option 2: Export cookies manually**
-1. Install a browser extension like "Get cookies.txt" for Chrome/Firefox
+**Option 1: Export cookies manually (Recommended for production)**
+1. Install a browser extension like "Get cookies.txt LOCALLY" for Chrome/Firefox
 2. Visit youtube.com and make sure you're logged in
 3. Click the extension and export cookies
 4. Save as `cookies.txt` in the project root directory
 
-**Note**: The app will try Chrome browser cookies first, then fall back to cookies.txt if it exists.
+**Option 2: Use browser cookies (automatic - Local development only)**
+On your local machine with Chrome installed, the app will try to use cookies from your Chrome browser automatically.
+
+**Download Strategy**:
+The app tries multiple strategies in order:
+1. cookies.txt file (if exists)
+2. Chrome browser cookies (if Chrome is installed)
+3. No authentication (works for most public videos)
 
 ## Notes
 
