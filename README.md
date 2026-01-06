@@ -1,19 +1,10 @@
-# נגן שירים / Dumb Music Player
+# Dumb Music Player
 
-אפליקציית ווב קלת משקל המותאמת לדפדפן Opera Mini בנוקיה 215, מאפשרת למשתמשים לצפות ברשימת שירים ולהוריד MP3.
+A lightweight web app optimized for Nokia 215 Opera Mini browser that allows users to browse songs and download MP3s. Features a Hebrew interface for the target audience.
 
-A lightweight web app optimized for Nokia 215 Opera Mini browser that allows users to browse songs and download MP3s.
+## Features
 
-## תכונות / Features
-
-### ממשק ציבורי / Public Interface
-- ממשק פשוט ללא JavaScript, מותאם ל-Opera Mini
-- רשימת שירים עם שמות כפי שהם מופיעים ביוטיוב
-- תמונות ממוזערות (thumbnails) ליד כל שיר
-- הורדת שירים כקבצי MP3
-- אין צורך בהתחברות למשתמשי קצה
-- רק המנהל יכול להוסיף שירים
-
+### Public Interface
 - Simple, minimal JavaScript interface optimized for Opera Mini
 - Flat list of songs with names as they appear on YouTube
 - Thumbnails displayed next to each song
@@ -21,17 +12,9 @@ A lightweight web app optimized for Nokia 215 Opera Mini browser that allows use
 - No login required for end users
 - Only admin can add songs
 
-### ממשק ניהול / Admin Backend
-- ממשק ניהול מוגן בסיסמה
-- חיפוש שירים ביוטיוב: תוצאות עם תמונות ממוזערות ואפשרות תצוגה מקדימה
-- בחירת הסרטון הנכון מתוך תוצאות החיפוש
-- הורדה אוטומטית עם שמירת thumbnail
-- עריכת שמות שירים
-- מחיקת שירים
-- הכל בעברית
-
+### Admin Backend
 - Password-protected admin interface
-- Search YouTube: results with thumbnails and preview option
+- Search YouTube with embedded video previews
 - Select the correct video from search results
 - Automatic download with thumbnail saving
 - Edit song names
@@ -100,18 +83,18 @@ pip install gunicorn
 gunicorn -w 4 -b 0.0.0.0:5000 app:app
 ```
 
-## Admin Workflow / תהליך ניהול
+## Admin Workflow
 
-1. עבור ל-`/admin` והתחבר עם הסיסמה שלך / Go to `/admin` and log in with your password
-2. לחץ "הוסף שיר חדש" / Click "הוסף שיר חדש" (Add New Song)
-3. הזן שם שיר ושם אמן / Enter song name and artist name
-4. לחץ "חפש ביוטיוב" / Click "חפש ביוטיוב" (Search YouTube)
-5. תראה 5 תוצאות עם תמונות ממוזערות / See 5 results with thumbnails
-6. לחץ על סרטון כדי לראות נגן YouTube מוטמע בדף / Click a video to see embedded YouTube player in page
-7. בחר את הסרטון הנכון עם כפתור הרדיו / Select the correct video with radio button
-8. לחץ "הורד את השיר הנבחר" / Click "הורד את השיר הנבחר" (Download selected song)
-9. השיר יתווסף עם thumbnail / Song will be added with thumbnail
-10. ערוך את השם לפי הצורך / Edit the name if needed
+1. Go to `/admin` and log in with your password
+2. Click "הוסף שיר חדש" (Add New Song)
+3. Enter song name and artist name
+4. Click "חפש ביוטיוב" (Search YouTube)
+5. See 5 results with embedded YouTube players
+6. Watch/preview videos directly in the page
+7. Select the correct video with radio button
+8. Click "הורד את השיר הנבחר" (Download selected song)
+9. Song will be added with thumbnail
+10. Edit the name if needed
 
 ## Project Structure
 
@@ -169,13 +152,13 @@ The app tries multiple strategies in order:
 2. Chrome browser cookies (if Chrome is installed)
 3. No authentication (works for most public videos)
 
-## Notes / הערות
+## Notes
 
-- **Hebrew Interface / ממשק עברי**: All UI text is in Hebrew with RTL support for optimal viewing.
-- **Opera Mini Optimization / אופטימיזציה ל-Opera Mini**: The UI uses minimal CSS, no JavaScript, and simple HTML that works well on feature phones.
-- **YouTube Downloads / הורדות מיוטיוב**: Uses yt-dlp to search and download from YouTube. Make sure this complies with YouTube's Terms of Service in your jurisdiction.
-- **Storage / אחסון**: MP3 files are stored in the `downloads/` directory. Make sure you have enough disk space.
-- **Song Names / שמות שירים**: Songs are initially named as they appear on YouTube, but can be edited through the admin interface.
+- **Hebrew Interface**: All UI text is in Hebrew with RTL support for optimal viewing on Nokia 215
+- **Opera Mini Optimization**: The UI uses minimal CSS, minimal JavaScript, and simple HTML that works well on feature phones
+- **YouTube Downloads**: Uses yt-dlp to search and download from YouTube. Make sure this complies with YouTube's Terms of Service in your jurisdiction
+- **Storage**: MP3 files are stored in the `downloads/` directory. Make sure you have enough disk space
+- **Song Names**: Songs are initially named as they appear on YouTube, but can be edited through the admin interface
 
 ## License
 
