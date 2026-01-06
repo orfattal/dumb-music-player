@@ -105,16 +105,13 @@ gunicorn -w 4 -b 0.0.0.0:5000 app:app
 1. עבור ל-`/admin` והתחבר עם הסיסמה שלך / Go to `/admin` and log in with your password
 2. לחץ "הוסף שיר חדש" / Click "הוסף שיר חדש" (Add New Song)
 3. הזן שם שיר ושם אמן / Enter song name and artist name
-4. האפליקציה תבצע:
-   - חיפוש ביוטיוב
-   - הורדה כ-MP3
-   - הוספה לרשימת השירים עם השם כפי שהוא מופיע ביוטיוב
-
-   The app will:
-   - Search YouTube for the song
-   - Download it as MP3
-   - Add it to the song list with the name as it appears on YouTube
-5. ערוך את השם לפי הצורך / Edit the name if needed
+4. לחץ "חפש ביוטיוב" / Click "חפש ביוטיוב" (Search YouTube)
+5. תראה 5 תוצאות עם תמונות ממוזערות / See 5 results with thumbnails
+6. לחץ על סרטון כדי לראות נגן YouTube מוטמע בדף / Click a video to see embedded YouTube player in page
+7. בחר את הסרטון הנכון עם כפתור הרדיו / Select the correct video with radio button
+8. לחץ "הורד את השיר הנבחר" / Click "הורד את השיר הנבחר" (Download selected song)
+9. השיר יתווסף עם thumbnail / Song will be added with thumbnail
+10. ערוך את השם לפי הצורך / Edit the name if needed
 
 ## Project Structure
 

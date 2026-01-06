@@ -13,23 +13,49 @@
 <p>תוצאות מיוטיוב:</p>
 
 {% for video in results %}
-<div class="search-result">
-    <div class="result-content">
-        <img src="{{ video.thumbnail }}" alt="{{ video.title }}" class="thumbnail">
-        <div class="result-info">
-            <strong>{{ video.title }}</strong>
-            <br>
-            <small>ערוץ: {{ video.channel }}</small>
-            <br>
-            {% if video.duration %}
-            <small>משך: {{ (video.duration // 60) }}:{{ '%02d' % (video.duration % 60) }}</small>
-            {% endif %}
-            <br>
-            <a href="{{ video.url }}" target="_blank" class="button">צפה ביוטיוב</a>
-        </div>
+<div class="search-result" id="result_{{ loop.index0 }}">
+    <table width="100%" cellpadding="5" cellspacing="0" border="0">
+        <tr>
+            <td width="130" valign="top">
+                <img src="{{ video.thumbnail }}" alt="{{ video.title }}" width="120" height="90" style="border-radius: 5px; cursor: pointer;" onclick="togglePlayer({{ loop.index0 }})">
+            </td>
+            <td valign="top">
+                <strong>{{ video.title }}</strong>
+                <br>
+                <small>ערוץ: {{ video.channel }}</small>
+                <br>
+                {% if video.duration %}
+                <small>משך: {{ (video.duration // 60) }}:{{ '%02d' % (video.duration % 60) }}</small>
+                {% endif %}
+                <br><br>
+                <a href="#" class="button" onclick="togglePlayer({{ loop.index0 }}); return false;">▶ נגן</a>
+            </td>
+        </tr>
+    </table>
+    <div id="player_{{ loop.index0 }}" style="display: none; margin-top: 10px;">
+        <iframe width="100%" height="200"
+                src="https://www.youtube.com/embed/{{ video.id }}"
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+                style="max-width: 100%; border-radius: 5px;">
+        </iframe>
     </div>
 </div>
 {% endfor %}
+
+<script>
+function togglePlayer(index) {
+    var player = document.getElementById('player_' + index);
+    if (player) {
+        if (player.style.display === 'none') {
+            player.style.display = 'block';
+        } else {
+            player.style.display = 'none';
+        }
+    }
+}
+</script>
 
 <style>
 .search-result {
@@ -37,30 +63,10 @@
     margin: 15px 0;
     padding: 10px;
     border-radius: 5px;
+    background: #fff;
 }
 
-.result-content {
-    display: flex;
-    gap: 15px;
-    align-items: flex-start;
-}
-
-.thumbnail {
-    width: 120px;
-    height: 90px;
-    object-fit: cover;
-    border-radius: 5px;
-}
-
-.result-info {
-    flex: 1;
-}
-
-.result-info strong {
-    font-size: 16px;
-}
-
-.result-info small {
+small {
     color: #666;
 }
 </style>

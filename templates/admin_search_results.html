@@ -21,28 +21,40 @@
     <input type="hidden" name="artist_name" value="{{ artist_name }}">
 
     {% for video in results %}
-    <div class="search-result">
+    <div class="search-result" id="result_{{ loop.index0 }}">
         <input type="radio" name="selected_video" id="video_{{ loop.index0 }}"
                value="{{ video.url }}"
                data-title="{{ video.title }}"
                data-thumbnail="{{ video.thumbnail }}"
-               required>
+               required
+               onclick="showPlayer('{{ video.id }}', {{ loop.index0 }})">
         <label for="video_{{ loop.index0 }}">
-            <div class="result-content">
-                <img src="{{ video.thumbnail }}" alt="{{ video.title }}" class="thumbnail">
-                <div class="result-info">
-                    <strong>{{ video.title }}</strong>
-                    <br>
-                    <small>ערוץ: {{ video.channel }}</small>
-                    <br>
-                    {% if video.duration %}
-                    <small>משך: {{ (video.duration // 60) }}:{{ '%02d' % (video.duration % 60) }}</small>
-                    {% endif %}
-                    <br>
-                    <a href="{{ video.url }}" target="_blank" class="button">צפה ביוטיוב</a>
-                </div>
-            </div>
+            <table width="100%" cellpadding="5" cellspacing="0" border="0">
+                <tr>
+                    <td width="130" valign="top">
+                        <img src="{{ video.thumbnail }}" alt="{{ video.title }}" width="120" height="90" style="border-radius: 5px;">
+                    </td>
+                    <td valign="top">
+                        <strong>{{ video.title }}</strong>
+                        <br>
+                        <small>ערוץ: {{ video.channel }}</small>
+                        <br>
+                        {% if video.duration %}
+                        <small>משך: {{ (video.duration // 60) }}:{{ '%02d' % (video.duration % 60) }}</small>
+                        {% endif %}
+                    </td>
+                </tr>
+            </table>
         </label>
+        <div id="player_{{ loop.index0 }}" style="display: none; margin-top: 10px;">
+            <iframe width="100%" height="200"
+                    src="https://www.youtube.com/embed/{{ video.id }}"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen
+                    style="max-width: 100%; border-radius: 5px;">
+            </iframe>
+        </div>
     </div>
     {% endfor %}
 
@@ -51,6 +63,25 @@
 </form>
 
 <script>
+var currentPlayer = null;
+
+function showPlayer(videoId, index) {
+    // Hide previous player
+    if (currentPlayer !== null) {
+        var prevPlayer = document.getElementById('player_' + currentPlayer);
+        if (prevPlayer) {
+            prevPlayer.style.display = 'none';
+        }
+    }
+
+    // Show current player
+    var player = document.getElementById('player_' + index);
+    if (player) {
+        player.style.display = 'block';
+        currentPlayer = index;
+    }
+}
+
 function prepareDownload() {
     var selected = document.querySelector('input[name="selected_video"]:checked');
     if (!selected) {
@@ -89,41 +120,21 @@ function prepareDownload() {
     margin: 15px 0;
     padding: 10px;
     border-radius: 5px;
+    background: #fff;
 }
 
 .search-result input[type="radio"]:checked + label {
     background-color: #e8f4ff;
 }
 
-.result-content {
-    display: flex;
-    gap: 15px;
-    align-items: flex-start;
-}
-
-.thumbnail {
-    width: 120px;
-    height: 90px;
-    object-fit: cover;
-    border-radius: 5px;
-}
-
-.result-info {
-    flex: 1;
-}
-
-.result-info strong {
-    font-size: 16px;
-}
-
-.result-info small {
-    color: #666;
-}
-
 label {
     cursor: pointer;
     display: block;
     padding: 5px;
+}
+
+small {
+    color: #666;
 }
 </style>
 {% endblock %}
