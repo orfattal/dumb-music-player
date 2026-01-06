@@ -93,12 +93,11 @@ gunicorn -w 4 -b 0.0.0.0:5000 app:app
 6. Watch/preview videos directly in the page
 7. Select the correct video with radio button
 8. Click "הורד את השיר הנבחר" (Download selected song)
-9. You'll be redirected to the dashboard immediately
-10. Download happens in the background - watch the "הורדות פעילות" (Active Downloads) section
-11. Page auto-refreshes when download completes
-12. Edit the song name if needed
+9. Wait for download to complete (shows loading overlay)
+10. Song will be added to the list
+11. Edit the song name if needed
 
-**Background Downloads**: Downloads happen asynchronously in background threads. You can continue working while songs download. The dashboard shows real-time status updates for active downloads.
+**Note**: Downloads are synchronous and may take 30-60 seconds. A dismissible loading overlay is shown during the process.
 
 ## Project Structure
 
