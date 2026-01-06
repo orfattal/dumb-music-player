@@ -3,10 +3,15 @@ import json
 import re
 import requests
 import yt_dlp
+import sys
 from flask import Flask, render_template, request, redirect, url_for, session, send_file, jsonify
 from werkzeug.security import check_password_hash, generate_password_hash
 from dotenv import load_dotenv
 from pathlib import Path
+
+# Force unbuffered output for real-time logging
+sys.stdout.reconfigure(line_buffering=True)
+sys.stderr.reconfigure(line_buffering=True)
 
 load_dotenv()
 
@@ -77,11 +82,11 @@ def search_youtube(song_name, artist_name, num_results=5):
 
 def download_from_youtube(youtube_url, output_path, thumbnail_path=None):
     """Download audio from YouTube as MP3 and optionally save thumbnail."""
-    print(f"  [download_from_youtube] Starting download for: {youtube_url}")
+    print(f"  [download_from_youtube] Starting download for: {youtube_url}", flush=True)
 
     # Check if cookies file exists
     cookies_file = Path('cookies.txt')
-    print(f"  [download_from_youtube] Checking for cookies.txt... {'FOUND' if cookies_file.exists() else 'NOT FOUND'}")
+    print(f"  [download_from_youtube] Checking for cookies.txt... {'FOUND' if cookies_file.exists() else 'NOT FOUND'}", flush=True)
 
     ydl_opts = {
         'format': 'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best',
@@ -116,37 +121,37 @@ def download_from_youtube(youtube_url, output_path, thumbnail_path=None):
     # Strategy 3: Try without cookies (fallback)
     strategies.append(("no authentication", ydl_opts.copy()))
 
-    print(f"  [download_from_youtube] Will try {len(strategies)} strategies")
+    print(f"  [download_from_youtube] Will try {len(strategies)} strategies", flush=True)
 
     # Try each strategy until one works
     for strategy_index, (strategy_name, opts) in enumerate(strategies, 1):
         try:
-            print(f"\n  [download_from_youtube] === STRATEGY {strategy_index}/{len(strategies)}: {strategy_name} ===")
-            print(f"  [download_from_youtube] Downloading from: {youtube_url}")
-            print(f"  [download_from_youtube] Output path: {output_path}")
+            print(f"\n  [download_from_youtube] === STRATEGY {strategy_index}/{len(strategies)}: {strategy_name} ===", flush=True)
+            print(f"  [download_from_youtube] Downloading from: {youtube_url}", flush=True)
+            print(f"  [download_from_youtube] Output path: {output_path}", flush=True)
 
             import time
             strategy_start = time.time()
 
-            print(f"  [download_from_youtube] Creating YoutubeDL instance...")
+            print(f"  [download_from_youtube] Creating YoutubeDL instance...", flush=True)
             with yt_dlp.YoutubeDL(opts) as ydl:
-                print(f"  [download_from_youtube] Calling extract_info()...")
+                print(f"  [download_from_youtube] Calling extract_info()...", flush=True)
                 info = ydl.extract_info(youtube_url, download=True)
-                print(f"  [download_from_youtube] extract_info() completed")
+                print(f"  [download_from_youtube] extract_info() completed", flush=True)
 
             strategy_elapsed = time.time() - strategy_start
-            print(f"  [download_from_youtube] Strategy took {strategy_elapsed:.2f} seconds")
+            print(f"  [download_from_youtube] Strategy took {strategy_elapsed:.2f} seconds", flush=True)
 
             # Check if the mp3 file was created
-            print(f"  [download_from_youtube] Checking if file exists at: {output_path}")
+            print(f"  [download_from_youtube] Checking if file exists at: {output_path}", flush=True)
             if output_path.exists():
-                print(f"  [download_from_youtube] ✓ File created successfully: {output_path}")
+                print(f"  [download_from_youtube] ✓ File created successfully: {output_path}", flush=True)
                 file_size = output_path.stat().st_size / (1024 * 1024)  # MB
-                print(f"  [download_from_youtube] File size: {file_size:.2f} MB")
+                print(f"  [download_from_youtube] File size: {file_size:.2f} MB", flush=True)
 
                 # Handle thumbnail if requested
                 if thumbnail_path:
-                    print(f"  [download_from_youtube] Processing thumbnail...")
+                    print(f"  [download_from_youtube] Processing thumbnail...", flush=True)
                     # yt-dlp saves thumbnail with same basename as audio file
                     possible_thumb_exts = ['.jpg', '.png', '.webp']
                     base_path = output_path.with_suffix('')
@@ -156,37 +161,39 @@ def download_from_youtube(youtube_url, output_path, thumbnail_path=None):
                             # Move thumbnail to desired location
                             import shutil
                             shutil.move(str(thumb_file), str(thumbnail_path))
-                            print(f"  [download_from_youtube] ✓ Thumbnail saved: {thumbnail_path}")
+                            print(f"  [download_from_youtube] ✓ Thumbnail saved: {thumbnail_path}", flush=True)
                             break
                     else:
-                        print(f"  [download_from_youtube] ⚠ No thumbnail found")
+                        print(f"  [download_from_youtube] ⚠ No thumbnail found", flush=True)
 
-                print(f"  [download_from_youtube] === SUCCESS ===")
+                print(f"  [download_from_youtube] === SUCCESS ===", flush=True)
                 return True
             else:
-                print(f"  [download_from_youtube] ✗ File not created at expected path: {output_path}")
+                print(f"  [download_from_youtube] ✗ File not created at expected path: {output_path}", flush=True)
                 # Check if file exists without extension
                 base_path = output_path.with_suffix('')
                 if base_path.exists():
-                    print(f"  [download_from_youtube] Found file without .mp3 extension, renaming...")
+                    print(f"  [download_from_youtube] Found file without .mp3 extension, renaming...", flush=True)
                     base_path.rename(output_path)
-                    print(f"  [download_from_youtube] === SUCCESS (after rename) ===")
+                    print(f"  [download_from_youtube] === SUCCESS (after rename) ===", flush=True)
                     return True
                 else:
-                    print(f"  [download_from_youtube] File not found even without extension")
+                    print(f"  [download_from_youtube] File not found even without extension", flush=True)
         except Exception as e:
             import traceback
-            print(f"  [download_from_youtube] ✗ Strategy '{strategy_name}' FAILED")
-            print(f"  [download_from_youtube] Error: {e}")
-            print(f"  [download_from_youtube] Traceback:")
+            print(f"  [download_from_youtube] ✗ Strategy '{strategy_name}' FAILED", flush=True)
+            print(f"  [download_from_youtube] Error: {e}", flush=True)
+            print(f"  [download_from_youtube] Traceback:", flush=True)
             traceback.print_exc()
+            sys.stdout.flush()
+            sys.stderr.flush()
             # Continue to next strategy
             continue
 
     # All strategies failed
-    print(f"  [download_from_youtube] === ALL STRATEGIES FAILED ===")
-    print(f"  [download_from_youtube] Error: All download strategies failed for {youtube_url}")
-    print("  [download_from_youtube] Tip: For better reliability, export YouTube cookies to cookies.txt file")
+    print(f"  [download_from_youtube] === ALL STRATEGIES FAILED ===", flush=True)
+    print(f"  [download_from_youtube] Error: All download strategies failed for {youtube_url}", flush=True)
+    print("  [download_from_youtube] Tip: For better reliability, export YouTube cookies to cookies.txt file", flush=True)
     return False
 
 
@@ -267,38 +274,38 @@ def admin_add_song():
         return redirect(url_for('admin_login'))
 
     if request.method == 'POST':
-        print("\n" + "="*80)
-        print("SEARCH REQUEST STARTED")
-        print("="*80)
+        print("\n" + "="*80, flush=True)
+        print("SEARCH REQUEST STARTED", flush=True)
+        print("="*80, flush=True)
 
         song_name = request.form.get('song_name')
         artist_name = request.form.get('artist_name')
 
-        print(f"Song Name: {song_name}")
-        print(f"Artist Name: {artist_name}")
+        print(f"Song Name: {song_name}", flush=True)
+        print(f"Artist Name: {artist_name}", flush=True)
 
         if not song_name or not artist_name:
-            print("ERROR: Missing song_name or artist_name")
+            print("ERROR: Missing song_name or artist_name", flush=True)
             return render_template('admin_add_song.html', error='נא למלא שם שיר ושם אמן')
 
         # Search YouTube
-        print("\n>>> CALLING search_youtube()...")
+        print("\n>>> CALLING search_youtube()...", flush=True)
         import time
         start_time = time.time()
         search_results = search_youtube(song_name, artist_name)
         elapsed_time = time.time() - start_time
-        print(f"<<< search_youtube() COMPLETED in {elapsed_time:.2f} seconds")
-        print(f"Found {len(search_results)} results")
+        print(f"<<< search_youtube() COMPLETED in {elapsed_time:.2f} seconds", flush=True)
+        print(f"Found {len(search_results)} results", flush=True)
 
         if not search_results:
-            print("ERROR: No search results found")
+            print("ERROR: No search results found", flush=True)
             return render_template('admin_add_song.html', error='לא נמצא שיר ביוטיוב')
 
         # Show search results
-        print("\n>>> Rendering search results page...")
-        print("="*80)
-        print("SEARCH REQUEST COMPLETED")
-        print("="*80 + "\n")
+        print("\n>>> Rendering search results page...", flush=True)
+        print("="*80, flush=True)
+        print("SEARCH REQUEST COMPLETED", flush=True)
+        print("="*80 + "\n", flush=True)
         return render_template('admin_search_results.html',
                              results=search_results,
                              song_name=song_name,
@@ -310,12 +317,12 @@ def admin_add_song():
 @app.route('/admin/download-song', methods=['POST'])
 def admin_download_song():
     """Download selected song from YouTube."""
-    print("\n" + "="*80)
-    print("DOWNLOAD REQUEST STARTED")
-    print("="*80)
+    print("\n" + "="*80, flush=True)
+    print("DOWNLOAD REQUEST STARTED", flush=True)
+    print("="*80, flush=True)
 
     if 'admin' not in session:
-        print("ERROR: User not authenticated")
+        print("ERROR: User not authenticated", flush=True)
         return redirect(url_for('admin_login'))
 
     youtube_url = request.form.get('youtube_url')
@@ -324,13 +331,13 @@ def admin_download_song():
     song_name = request.form.get('song_name')
     artist_name = request.form.get('artist_name')
 
-    print(f"Song Name: {song_name}")
-    print(f"Artist Name: {artist_name}")
-    print(f"YouTube URL: {youtube_url}")
-    print(f"YouTube Title: {youtube_title}")
+    print(f"Song Name: {song_name}", flush=True)
+    print(f"Artist Name: {artist_name}", flush=True)
+    print(f"YouTube URL: {youtube_url}", flush=True)
+    print(f"YouTube Title: {youtube_title}", flush=True)
 
     if not youtube_url or not youtube_title:
-        print("ERROR: Missing youtube_url or youtube_title")
+        print("ERROR: Missing youtube_url or youtube_title", flush=True)
         return redirect(url_for('admin_add_song'))
 
     # Generate filename
@@ -343,9 +350,9 @@ def admin_download_song():
     thumbnail_filename = f"{video_id}.jpg"
     thumbnail_path = THUMBNAILS_DIR / thumbnail_filename
 
-    print(f"Output filename: {filename}")
-    print(f"Thumbnail filename: {thumbnail_filename}")
-    print("\n>>> CALLING download_from_youtube()...")
+    print(f"Output filename: {filename}", flush=True)
+    print(f"Thumbnail filename: {thumbnail_filename}", flush=True)
+    print("\n>>> CALLING download_from_youtube()...", flush=True)
 
     # Download from YouTube
     output_path = DOWNLOADS_DIR / filename
@@ -355,19 +362,19 @@ def admin_download_song():
     success = download_from_youtube(youtube_url, output_path, thumbnail_path)
     elapsed_time = time.time() - start_time
 
-    print(f"<<< download_from_youtube() COMPLETED in {elapsed_time:.2f} seconds")
-    print(f"Success: {success}")
+    print(f"<<< download_from_youtube() COMPLETED in {elapsed_time:.2f} seconds", flush=True)
+    print(f"Success: {success}", flush=True)
 
     if not success:
-        print("ERROR: Download failed, re-rendering search results")
+        print("ERROR: Download failed, re-rendering search results", flush=True)
         search_results = search_youtube(song_name, artist_name)
         return render_template('admin_search_results.html',
                              results=search_results,
                              song_name=song_name,
                              artist_name=artist_name,
-                             error='שגיאה בהורדה מיוטיוב')
+                             error='שגיאה בהורדה מיוטיוב. אולי צריך לעדכן cookies?')
 
-    print("\n>>> Adding song to database...")
+    print("\n>>> Adding song to database...", flush=True)
     # Add to songs list
     data = load_data()
     data['songs'].append({
@@ -377,12 +384,12 @@ def admin_download_song():
         'thumbnail': thumbnail_filename if thumbnail_path.exists() else None
     })
     save_data(data)
-    print("<<< Song added to database successfully")
+    print("<<< Song added to database successfully", flush=True)
 
-    print("\n>>> Redirecting to admin dashboard...")
-    print("="*80)
-    print("DOWNLOAD REQUEST COMPLETED")
-    print("="*80 + "\n")
+    print("\n>>> Redirecting to admin dashboard...", flush=True)
+    print("="*80, flush=True)
+    print("DOWNLOAD REQUEST COMPLETED", flush=True)
+    print("="*80 + "\n", flush=True)
 
     return redirect(url_for('admin_dashboard'))
 
