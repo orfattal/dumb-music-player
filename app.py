@@ -314,11 +314,27 @@ def admin_add_song():
     return render_template('admin_add_song.html')
 
 
+@app.route('/admin/ping', methods=['GET', 'POST'])
+def admin_ping():
+    """Simple test endpoint to verify requests reach the server."""
+    print("!!! PING ENDPOINT HIT !!!", flush=True)
+    print(f"Method: {request.method}", flush=True)
+    print(f"Form data: {dict(request.form)}", flush=True)
+    return jsonify({'status': 'ok', 'message': 'Server is reachable'})
+
+
 @app.route('/admin/download-song', methods=['POST'])
 def admin_download_song():
     """Download selected song from YouTube."""
+    import sys
+    sys.stdout.flush()
+    sys.stderr.flush()
     print("\n" + "="*80, flush=True)
+    print("!!! DOWNLOAD ROUTE HIT !!!", flush=True)
     print("DOWNLOAD REQUEST STARTED", flush=True)
+    print(f"Request method: {request.method}", flush=True)
+    print(f"Request path: {request.path}", flush=True)
+    print(f"Request form keys: {list(request.form.keys())}", flush=True)
     print("="*80, flush=True)
 
     if 'admin' not in session:

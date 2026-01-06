@@ -90,14 +90,22 @@ function dismissOverlay() {
 }
 
 function prepareDownload() {
+    console.log('[CLIENT] prepareDownload() START');
+
     var selected = document.querySelector('input[name="selected_video"]:checked');
     if (!selected) {
+        console.log('[CLIENT] No video selected');
         alert('נא לבחור סרטון');
         return false;
     }
 
+    console.log('[CLIENT] Selected URL:', selected.value);
+    console.log('[CLIENT] Selected title:', selected.dataset.title);
+
     // Add hidden fields with video data
     var form = selected.closest('form');
+    console.log('[CLIENT] Form found:', form);
+    console.log('[CLIENT] Form action:', form.action);
 
     var urlInput = document.createElement('input');
     urlInput.type = 'hidden';
@@ -117,19 +125,25 @@ function prepareDownload() {
     thumbInput.value = selected.dataset.thumbnail;
     form.appendChild(thumbInput);
 
+    console.log('[CLIENT] Hidden fields added to form');
+
     // Show loading overlay
     document.getElementById('loadingOverlay').style.display = 'block';
     var btn = document.getElementById('downloadButton');
     btn.disabled = true;
 
+    console.log('[CLIENT] Overlay shown, button disabled');
+
     // After 30 seconds, show close button
     downloadTimer = setTimeout(function() {
+        console.log('[CLIENT] 30 seconds elapsed');
         var timer = document.getElementById('overlayTimer');
         if (timer) {
             timer.style.display = 'block';
         }
     }, 30000); // 30 seconds
 
+    console.log('[CLIENT] Returning true - form will now submit');
     return true;
 }
 </script>
