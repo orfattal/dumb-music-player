@@ -26,25 +26,51 @@
 
 <!-- Loading Overlay -->
 <div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; text-align: center;">
-    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); max-width: 400px;">
         <h2 style="margin: 0 0 10px 0; color: #333;">⏳ מחפש ביוטיוב...</h2>
         <p style="margin: 0; color: #666;">נא להמתין, זה עשוי לקחת כמה שניות</p>
+        <div id="overlayTimer" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+            <p style="margin: 0 0 10px 0; color: #e67e22; font-size: 14px;">החיפוש לוקח יותר זמן מהצפוי...</p>
+            <button onclick="dismissOverlay()" style="padding: 10px 20px; background: #e74c3c; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">✕ סגור ובדוק מאוחר יותר</button>
+        </div>
     </div>
 </div>
 
 <script>
+var searchTimer = null;
+
 // Hide overlay on page load (in case of error/page reload)
 window.onload = function() {
     var overlay = document.getElementById('loadingOverlay');
     if (overlay) {
         overlay.style.display = 'none';
     }
+    if (searchTimer) {
+        clearTimeout(searchTimer);
+        searchTimer = null;
+    }
 };
+
+function dismissOverlay() {
+    document.getElementById('loadingOverlay').style.display = 'none';
+    if (searchTimer) {
+        clearTimeout(searchTimer);
+        searchTimer = null;
+    }
+}
 
 function showSearchLoading() {
     document.getElementById('loadingOverlay').style.display = 'block';
     var btn = document.getElementById('searchButton');
     btn.disabled = true;
+
+    // After 15 seconds, show close button
+    searchTimer = setTimeout(function() {
+        var timer = document.getElementById('overlayTimer');
+        if (timer) {
+            timer.style.display = 'block';
+        }
+    }, 15000); // 15 seconds
 }
 </script>
 
