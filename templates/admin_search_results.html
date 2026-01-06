@@ -26,35 +26,23 @@
                value="{{ video.url }}"
                data-title="{{ video.title }}"
                data-thumbnail="{{ video.thumbnail }}"
-               required
-               onclick="showPlayer('{{ video.id }}', {{ loop.index0 }})">
-        <label for="video_{{ loop.index0 }}">
-            <table width="100%" cellpadding="5" cellspacing="0" border="0">
-                <tr>
-                    <td width="130" valign="top">
-                        <img src="{{ video.thumbnail }}" alt="{{ video.title }}" width="120" height="90" style="border-radius: 5px;">
-                    </td>
-                    <td valign="top">
-                        <strong>{{ video.title }}</strong>
-                        <br>
-                        <small>ערוץ: {{ video.channel }}</small>
-                        <br>
-                        {% if video.duration %}
-                        <small>משך: {{ (video.duration // 60) }}:{{ '%02d' % (video.duration % 60) }}</small>
-                        {% endif %}
-                    </td>
-                </tr>
-            </table>
+               required>
+        <label for="video_{{ loop.index0 }}" style="display: block; margin-bottom: 5px;">
+            <strong>{{ video.title }}</strong>
+            <br>
+            <small>ערוץ: {{ video.channel }}</small>
+            {% if video.duration %}
+            | <small>משך: {{ (video.duration // 60) }}:{{ '%02d' % (video.duration % 60) }}</small>
+            {% endif %}
         </label>
-        <div id="player_{{ loop.index0 }}" style="display: none; margin-top: 10px;">
-            <iframe width="100%" height="200"
-                    src="https://www.youtube.com/embed/{{ video.id }}"
-                    frameborder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowfullscreen
-                    style="max-width: 100%; border-radius: 5px;">
-            </iframe>
-        </div>
+
+        <iframe width="100%" height="200"
+                src="https://www.youtube.com/embed/{{ video.id }}"
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+                style="max-width: 100%; border-radius: 5px; margin-bottom: 10px;">
+        </iframe>
     </div>
     {% endfor %}
 
@@ -63,25 +51,6 @@
 </form>
 
 <script>
-var currentPlayer = null;
-
-function showPlayer(videoId, index) {
-    // Hide previous player
-    if (currentPlayer !== null) {
-        var prevPlayer = document.getElementById('player_' + currentPlayer);
-        if (prevPlayer) {
-            prevPlayer.style.display = 'none';
-        }
-    }
-
-    // Show current player
-    var player = document.getElementById('player_' + index);
-    if (player) {
-        player.style.display = 'block';
-        currentPlayer = index;
-    }
-}
-
 function prepareDownload() {
     var selected = document.querySelector('input[name="selected_video"]:checked');
     if (!selected) {
@@ -118,18 +87,19 @@ function prepareDownload() {
 .search-result {
     border: 2px solid #ddd;
     margin: 15px 0;
-    padding: 10px;
+    padding: 15px;
     border-radius: 5px;
     background: #fff;
 }
 
-.search-result input[type="radio"]:checked + label {
+.search-result input[type="radio"]:checked ~ label {
     background-color: #e8f4ff;
+    padding: 5px;
+    border-radius: 3px;
 }
 
 label {
     cursor: pointer;
-    display: block;
     padding: 5px;
 }
 
