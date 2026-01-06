@@ -17,17 +17,56 @@
 {% if songs %}
     {% for song in songs %}
     <div class="song-item">
-        <strong>{{ song.display_name }}</strong>
-        <br>
-        <small>חיפוש: {{ song.search_name }} - {{ song.search_artist }}</small>
-        <br>
-        <a href="{{ url_for('admin_edit_song', song_id=loop.index0) }}" class="button">ערוך</a>
-        <form method="POST" action="{{ url_for('admin_delete_song', song_id=loop.index0) }}" style="display:inline;">
-            <button type="submit" class="button button-danger" onclick="return confirm('למחוק את השיר?')">מחק</button>
-        </form>
+        <div class="song-content">
+            {% if song.thumbnail %}
+            <img src="{{ url_for('static', filename='thumbnails/' + song.thumbnail) }}" alt="{{ song.display_name }}" class="song-thumbnail">
+            {% else %}
+            <div class="no-thumbnail">🎵</div>
+            {% endif %}
+            <div class="song-info">
+                <strong>{{ song.display_name }}</strong>
+                <br>
+                <small>חיפוש: {{ song.search_name }} - {{ song.search_artist }}</small>
+                <br>
+                <a href="{{ url_for('admin_edit_song', song_id=loop.index0) }}" class="button">ערוך</a>
+                <form method="POST" action="{{ url_for('admin_delete_song', song_id=loop.index0) }}" style="display:inline;">
+                    <button type="submit" class="button button-danger" onclick="return confirm('למחוק את השיר?')">מחק</button>
+                </form>
+            </div>
+        </div>
     </div>
     {% endfor %}
 {% else %}
     <p>אין שירים עדיין.</p>
 {% endif %}
+
+<style>
+.song-content {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.song-thumbnail {
+    width: 80px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 5px;
+}
+
+.no-thumbnail {
+    width: 80px;
+    height: 60px;
+    background: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    border-radius: 5px;
+}
+
+.song-info {
+    flex: 1;
+}
+</style>
 {% endblock %}

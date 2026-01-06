@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}תוצאות חיפוש{% endblock %}
+
+{% block content %}
+<div class="nav">
+    <a href="{{ url_for('admin_add_song') }}">&lt; חזרה לחיפוש</a> |
+    <a href="{{ url_for('admin_dashboard') }}">לוח הבקרה</a>
+</div>
+
+<h1>תוצאות חיפוש: {{ song_name }} - {{ artist_name }}</h1>
+
+{% if error %}
+<div class="error">{{ error }}</div>
+{% endif %}
+
+<p>בחר את הסרטון המתאים:</p>
+
+<form method="POST" action="{{ url_for('admin_download_song') }}">
+    <input type="hidden" name="song_name" value="{{ song_name }}">
+    <input type="hidden" name="artist_name" value="{{ artist_name }}">
+
+    {% for video in results %}
+    <div class="search-result">
+        <input type="radio" name="selected_video" id="video_{{ loop.index0 }}"
+               value="{{ video.url }}"
+               data-title="{{ video.title }}"
+               data-thumbnail="{{ video.thumbnail }}"
+               required>
+        <label for="video_{{ loop.index0 }}">
+            <div class="result-content">
+                <img src="{{ video.thumbnail }}" alt="{{ video.title }}" class="thumbnail">
+                <div class="result-info">
+                    <strong>{{ video.title }}</strong>
+                    <br>
+                    <small>ערוץ: {{ video.channel }}</small>
+                    <br>
+                    {% if video.duration %}
+                    <small>משך: {{ (video.duration // 60) }}:{{ '%02d' % (video.duration % 60) }}</small>
+                    {% endif %}
+                    <br>
+                    <a href="{{ video.url }}" target="_blank" class="button">צפה ביוטיוב</a>
+                </div>
+            </div>
+        </label>
+    </div>
+    {% endfor %}
+
+    <br>
+    <button type="submit" class="button" onclick="return prepareDownload()">הורד את השיר הנבחר</button>
+</form>
+
+<script>
+function prepareDownload() {
+    var selected = document.querySelector('input[name="selected_video"]:checked');
+    if (!selected) {
+        alert('נא לבחור סרטון');
+        return false;
+    }
+
+    // Add hidden fields with video data
+    var form = selected.closest('form');
+
+    var urlInput = document.createElement('input');
+    urlInput.type = 'hidden';
+    urlInput.name = 'youtube_url';
+    urlInput.value = selected.value;
+    form.appendChild(urlInput);
+
+    var titleInput = document.createElement('input');
+    titleInput.type = 'hidden';
+    titleInput.name = 'youtube_title';
+    titleInput.value = selected.dataset.title;
+    form.appendChild(titleInput);
+
+    var thumbInput = document.createElement('input');
+    thumbInput.type = 'hidden';
+    thumbInput.name = 'youtube_thumbnail';
+    thumbInput.value = selected.dataset.thumbnail;
+    form.appendChild(thumbInput);
+
+    return true;
+}
+</script>
+
+<style>
+.search-result {
+    border: 2px solid #ddd;
+    margin: 15px 0;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.search-result input[type="radio"]:checked + label {
+    background-color: #e8f4ff;
+}
+
+.result-content {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+}
+
+.thumbnail {
+    width: 120px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 5px;
+}
+
+.result-info {
+    flex: 1;
+}
+
+.result-info strong {
+    font-size: 16px;
+}
+
+.result-info small {
+    color: #666;
+}
+
+label {
+    cursor: pointer;
+    display: block;
+    padding: 5px;
+}
+</style>
+{% endblock %}

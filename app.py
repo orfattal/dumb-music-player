@@ -23,6 +23,8 @@ def add_ngrok_header(response):
 # Directories
 DOWNLOADS_DIR = Path('downloads')
 DOWNLOADS_DIR.mkdir(exist_ok=True)
+THUMBNAILS_DIR = Path('static/thumbnails')
+THUMBNAILS_DIR.mkdir(parents=True, exist_ok=True)
 DATA_FILE = Path('data.json')
 
 # Initialize data file
@@ -42,9 +44,9 @@ def save_data(data):
         json.dump(data, f, indent=2, ensure_ascii=False)
 
 
-def search_youtube(song_name, artist_name):
-    """Search YouTube for a song and return the first result URL and title."""
-    query = f"{song_name} {artist_name} official audio"
+def search_youtube(song_name, artist_name, num_results=5):
+    """Search YouTube for a song and return top results with metadata."""
+    query = f"{song_name} {artist_name}"
 
     ydl_opts = {
         'quiet': True,
@@ -54,20 +56,27 @@ def search_youtube(song_name, artist_name):
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            result = ydl.extract_info(f"ytsearch1:{query}", download=False)
+            result = ydl.extract_info(f"ytsearch{num_results}:{query}", download=False)
             if result and 'entries' in result and len(result['entries']) > 0:
-                video = result['entries'][0]
-                url = f"https://www.youtube.com/watch?v={video['id']}"
-                title = video.get('title', f"{song_name} - {artist_name}")
-                return url, title
+                videos = []
+                for video in result['entries']:
+                    videos.append({
+                        'id': video['id'],
+                        'url': f"https://www.youtube.com/watch?v={video['id']}",
+                        'title': video.get('title', ''),
+                        'thumbnail': video.get('thumbnail', ''),
+                        'duration': video.get('duration', 0),
+                        'channel': video.get('channel', video.get('uploader', ''))
+                    })
+                return videos
     except Exception as e:
         print(f"Error searching YouTube: {e}")
 
-    return None, None
+    return []
 
 
-def download_from_youtube(youtube_url, output_path):
-    """Download audio from YouTube as MP3."""
+def download_from_youtube(youtube_url, output_path, thumbnail_path=None):
+    """Download audio from YouTube as MP3 and optionally save thumbnail."""
 
     # Check if cookies file exists
     cookies_file = Path('cookies.txt')
@@ -82,7 +91,7 @@ def download_from_youtube(youtube_url, output_path):
         'outtmpl': str(output_path.with_suffix('')),
         'quiet': False,
         'no_warnings': False,
-        'writethumbnail': False,
+        'writethumbnail': True if thumbnail_path else False,
         'extract_audio': True,
     }
 
@@ -118,6 +127,21 @@ def download_from_youtube(youtube_url, output_path):
             # Check if the mp3 file was created
             if output_path.exists():
                 print(f"✓ File created successfully: {output_path}")
+
+                # Handle thumbnail if requested
+                if thumbnail_path:
+                    # yt-dlp saves thumbnail with same basename as audio file
+                    possible_thumb_exts = ['.jpg', '.png', '.webp']
+                    base_path = output_path.with_suffix('')
+                    for ext in possible_thumb_exts:
+                        thumb_file = base_path.with_suffix(ext)
+                        if thumb_file.exists():
+                            # Move thumbnail to desired location
+                            import shutil
+                            shutil.move(str(thumb_file), str(thumbnail_path))
+                            print(f"✓ Thumbnail saved: {thumbnail_path}")
+                            break
+
                 return True
             else:
                 print(f"✗ File not created at expected path: {output_path}")
@@ -145,6 +169,31 @@ def index():
     """Public homepage showing all songs."""
     data = load_data()
     return render_template('index.html', songs=data['songs'])
+
+
+@app.route('/search', methods=['GET', 'POST'])
+def public_search():
+    """Public search for songs."""
+    if request.method == 'POST':
+        song_name = request.form.get('song_name')
+        artist_name = request.form.get('artist_name')
+
+        if not song_name or not artist_name:
+            return render_template('public_search.html', error='נא למלא שם שיר ושם אמן')
+
+        # Search YouTube
+        search_results = search_youtube(song_name, artist_name)
+
+        if not search_results:
+            return render_template('public_search.html', error='לא נמצא שיר ביוטיוב')
+
+        # Show search results
+        return render_template('public_search_results.html',
+                             results=search_results,
+                             song_name=song_name,
+                             artist_name=artist_name)
+
+    return render_template('public_search.html')
 
 
 @app.route('/download/<int:song_id>')
@@ -210,7 +259,7 @@ def admin_dashboard():
 
 @app.route('/admin/add-song', methods=['GET', 'POST'])
 def admin_add_song():
-    """Add a new song."""
+    """Search for a song on YouTube."""
     if 'admin' not in session:
         return redirect(url_for('admin_login'))
 
@@ -222,37 +271,70 @@ def admin_add_song():
             return render_template('admin_add_song.html', error='נא למלא שם שיר ושם אמן')
 
         # Search YouTube
-        youtube_url, youtube_title = search_youtube(song_name, artist_name)
+        search_results = search_youtube(song_name, artist_name)
 
-        if not youtube_url:
+        if not search_results:
             return render_template('admin_add_song.html', error='לא נמצא שיר ביוטיוב')
 
-        # Generate filename
-        safe_name = re.sub(r'[^\w\s-]', '', f"{song_name}-{artist_name}")
-        safe_name = re.sub(r'[-\s]+', '-', safe_name)
-        filename = f"{safe_name}.mp3"
-
-        # Download from YouTube
-        output_path = DOWNLOADS_DIR / filename
-        success = download_from_youtube(youtube_url, output_path)
-
-        if not success:
-            return render_template('admin_add_song.html', error='שגיאה בהורדה מיוטיוב')
-
-        # Add to songs list
-        data = load_data()
-        data['songs'].append({
-            'display_name': youtube_title,
-            'search_name': song_name,
-            'search_artist': artist_name,
-            'filename': filename,
-            'youtube_url': youtube_url
-        })
-        save_data(data)
-
-        return redirect(url_for('admin_dashboard'))
+        # Show search results
+        return render_template('admin_search_results.html',
+                             results=search_results,
+                             song_name=song_name,
+                             artist_name=artist_name)
 
     return render_template('admin_add_song.html')
+
+
+@app.route('/admin/download-song', methods=['POST'])
+def admin_download_song():
+    """Download selected song from YouTube."""
+    if 'admin' not in session:
+        return redirect(url_for('admin_login'))
+
+    youtube_url = request.form.get('youtube_url')
+    youtube_title = request.form.get('youtube_title')
+    youtube_thumbnail = request.form.get('youtube_thumbnail')
+    song_name = request.form.get('song_name')
+    artist_name = request.form.get('artist_name')
+
+    if not youtube_url or not youtube_title:
+        return redirect(url_for('admin_add_song'))
+
+    # Generate filename
+    safe_name = re.sub(r'[^\w\s-]', '', f"{song_name}-{artist_name}")
+    safe_name = re.sub(r'[-\s]+', '-', safe_name)
+    filename = f"{safe_name}.mp3"
+
+    # Generate thumbnail filename
+    video_id = youtube_url.split('watch?v=')[-1]
+    thumbnail_filename = f"{video_id}.jpg"
+    thumbnail_path = THUMBNAILS_DIR / thumbnail_filename
+
+    # Download from YouTube
+    output_path = DOWNLOADS_DIR / filename
+    success = download_from_youtube(youtube_url, output_path, thumbnail_path)
+
+    if not success:
+        search_results = search_youtube(song_name, artist_name)
+        return render_template('admin_search_results.html',
+                             results=search_results,
+                             song_name=song_name,
+                             artist_name=artist_name,
+                             error='שגיאה בהורדה מיוטיוב')
+
+    # Add to songs list
+    data = load_data()
+    data['songs'].append({
+        'display_name': youtube_title,
+        'search_name': song_name,
+        'search_artist': artist_name,
+        'filename': filename,
+        'youtube_url': youtube_url,
+        'thumbnail': thumbnail_filename if thumbnail_path.exists() else None
+    })
+    save_data(data)
+
+    return redirect(url_for('admin_dashboard'))
 
 
 @app.route('/admin/song/<int:song_id>/edit', methods=['GET', 'POST'])

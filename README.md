@@ -9,26 +9,34 @@ A lightweight web app optimized for Nokia 215 Opera Mini browser that allows use
 ### ממשק ציבורי / Public Interface
 - ממשק פשוט ללא JavaScript, מותאם ל-Opera Mini
 - רשימת שירים עם שמות כפי שהם מופיעים ביוטיוב
+- תמונות ממוזערות (thumbnails) ליד כל שיר
+- חיפוש חופשי ביוטיוב עם תצוגה מקדימה
 - הורדת שירים כקבצי MP3
 - אין צורך בהתחברות למשתמשי קצה
 
-- Simple, no-JavaScript interface optimized for Opera Mini
+- Simple, minimal JavaScript interface optimized for Opera Mini
 - Flat list of songs with names as they appear on YouTube
+- Thumbnails displayed next to each song
+- Free YouTube search with preview
 - Download songs as MP3 files
 - No login required for end users
 
 ### ממשק ניהול / Admin Backend
 - ממשק ניהול מוגן בסיסמה
-- הוספת שירים: חיפוש והורדה אוטומטית מיוטיוב
+- חיפוש שירים ביוטיוב: תוצאות עם תמונות ממוזערות ואפשרות תצוגה מקדימה
+- בחירת הסרטון הנכון מתוך תוצאות החיפוש
+- הורדה אוטומטית עם שמירת thumbnail
 - עריכת שמות שירים
 - מחיקת שירים
 - הכל בעברית
 
 - Password-protected admin interface
-- Add songs: search and download automatically from YouTube
+- Search YouTube: results with thumbnails and preview option
+- Select the correct video from search results
+- Automatic download with thumbnail saving
 - Edit song names
 - Delete songs
-- Hebrew interface
+- Full Hebrew interface
 
 ## Prerequisites
 

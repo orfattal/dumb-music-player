@@ -25,7 +25,19 @@ def migrate():
 
     # Check if already migrated
     if 'songs' in old_data and 'playlists' not in old_data:
-        print("✓ Data already in new format - no migration needed")
+        print("✓ Data already in new format")
+        # But add thumbnail field if missing
+        updated = False
+        for song in old_data['songs']:
+            if 'thumbnail' not in song:
+                song['thumbnail'] = None
+                updated = True
+        if updated:
+            with open(data_file, 'w') as f:
+                json.dump(old_data, f, indent=2, ensure_ascii=False)
+            print("✓ Added thumbnail field to existing songs")
+        else:
+            print("✓ No migration needed")
         return
 
     # Convert to new format
@@ -40,7 +52,8 @@ def migrate():
                 'search_name': song.get('name', ''),
                 'search_artist': song.get('artist', ''),
                 'filename': song.get('filename', ''),
-                'youtube_url': song.get('youtube_url', '')
+                'youtube_url': song.get('youtube_url', ''),
+                'thumbnail': song.get('thumbnail', None)
             })
 
     # Save new data

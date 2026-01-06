@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}חפש שיר{% endblock %}
+
+{% block content %}
+<div class="nav">
+    <a href="{{ url_for('index') }}">&lt; חזרה לדף הבית</a>
+</div>
+
+<h1>חפש שיר ביוטיוב</h1>
+
+{% if error %}
+<div class="error">{{ error }}</div>
+{% endif %}
+
+<form method="POST">
+    <label>שם השיר:</label>
+    <input type="text" name="song_name" required placeholder="Shape of You">
+
+    <label>שם האמן:</label>
+    <input type="text" name="artist_name" required placeholder="Ed Sheeran">
+
+    <br>
+    <button type="submit" class="button">חפש</button>
+</form>
+
+<br>
+<p><small>חפש שיר ביוטיוב ושמע לפני שתוריד</small></p>
+{% endblock %}
