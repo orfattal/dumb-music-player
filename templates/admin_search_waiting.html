@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}מחפש...{% endblock %}
+
+{% block content %}
+<div class="nav">
+    <a href="{{ url_for('admin_add_song') }}">&lt; חזרה לחיפוש</a> |
+    <a href="{{ url_for('admin_dashboard') }}">לוח הבקרה</a>
+</div>
+
+<div style="text-align: center; padding: 50px 20px;">
+    <h1 id="statusMessage">🔍 מחפש ביוטיוב...</h1>
+    <p style="font-size: 18px; color: #666;">{{ song_name }} - {{ artist_name }}</p>
+    <p style="color: #999;">נא להמתין...</p>
+
+    <div id="errorMessage" style="display: none; background: #ffe6e6; border: 2px solid #ff4444; border-radius: 5px; padding: 15px; margin: 20px auto; max-width: 400px;">
+        <p style="color: #cc0000; margin: 0;" id="errorText"></p>
+        <br>
+        <a href="{{ url_for('admin_add_song') }}" class="button">חזרה לחיפוש</a>
+    </div>
+</div>
+
+<script>
+var jobId = '{{ job_id }}';
+var pollInterval = null;
+var retryCount = 0;
+var maxRetries = 60; // 2 minutes (60 * 2 seconds)
+
+function checkSearchStatus() {
+    fetch('/admin/search-status/' + jobId)
+        .then(function(response) {
+            if (!response.ok) {
+                throw new Error('Failed to get status');
+            }
+            return response.json();
+        })
+        .then(function(data) {
+            retryCount++;
+
+            // Update status message
+            document.getElementById('statusMessage').textContent = data.message;
+
+            if (data.status === 'completed' && data.results) {
+                // Store results in sessionStorage and redirect
+                sessionStorage.setItem('searchResults_' + jobId, JSON.stringify({
+                    results: data.results,
+                    song_name: '{{ song_name }}',
+                    artist_name: '{{ artist_name }}'
+                }));
+
+                // Clear interval and redirect
+                if (pollInterval) clearInterval(pollInterval);
+                window.location.href = '/admin/search-results/' + jobId;
+            } else if (data.status === 'failed') {
+                // Show error
+                if (pollInterval) clearInterval(pollInterval);
+                document.getElementById('errorText').textContent = data.message;
+                document.getElementById('errorMessage').style.display = 'block';
+            } else if (retryCount >= maxRetries) {
+                // Timeout
+                if (pollInterval) clearInterval(pollInterval);
+                document.getElementById('errorText').textContent = 'החיפוש לוקח יותר מדי זמן. נסה שוב.';
+                document.getElementById('errorMessage').style.display = 'block';
+            }
+        })
+        .catch(function(error) {
+            console.error('Error checking search status:', error);
+            retryCount++;
+
+            if (retryCount >= maxRetries) {
+                if (pollInterval) clearInterval(pollInterval);
+                document.getElementById('errorText').textContent = 'שגיאה בבדיקת סטטוס החיפוש';
+                document.getElementById('errorMessage').style.display = 'block';
+            }
+        });
+}
+
+// Start polling every 2 seconds
+pollInterval = setInterval(checkSearchStatus, 2000);
+// Also check immediately
+checkSearchStatus();
+</script>
+{% endblock %}

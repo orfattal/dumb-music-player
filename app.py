@@ -35,6 +35,7 @@ if not DATA_FILE.exists():
 
 # Background download jobs tracker
 download_jobs = {}
+search_jobs = {}
 jobs_lock = threading.Lock()
 
 
@@ -166,6 +167,37 @@ def download_from_youtube(youtube_url, output_path, thumbnail_path=None):
     print(f"Error: All download strategies failed for {youtube_url}")
     print("Tip: For better reliability, export YouTube cookies to cookies.txt file")
     return False
+
+
+def background_search_job(job_id, song_name, artist_name):
+    """Background job for searching YouTube."""
+    global search_jobs
+
+    try:
+        # Update job status to searching
+        with jobs_lock:
+            search_jobs[job_id]['status'] = 'searching'
+            search_jobs[job_id]['message'] = 'מחפש ביוטיוב...'
+
+        # Perform the search
+        results = search_youtube(song_name, artist_name)
+
+        if results:
+            # Update job status to completed
+            with jobs_lock:
+                search_jobs[job_id]['status'] = 'completed'
+                search_jobs[job_id]['message'] = f'נמצאו {len(results)} תוצאות'
+                search_jobs[job_id]['results'] = results
+        else:
+            # Update job status to failed
+            with jobs_lock:
+                search_jobs[job_id]['status'] = 'failed'
+                search_jobs[job_id]['message'] = 'לא נמצאו תוצאות ביוטיוב'
+    except Exception as e:
+        print(f"Background search job error: {e}")
+        with jobs_lock:
+            search_jobs[job_id]['status'] = 'failed'
+            search_jobs[job_id]['message'] = f'שגיאה בחיפוש: {str(e)}'
 
 
 def background_download_job(job_id, youtube_url, youtube_title, thumbnail_url, song_name, artist_name, output_path, thumbnail_path):
@@ -333,19 +365,89 @@ def admin_add_song():
         if not song_name or not artist_name:
             return render_template('admin_add_song.html', error='נא למלא שם שיר ושם אמן')
 
-        # Search YouTube
-        search_results = search_youtube(song_name, artist_name)
+        # Create a unique job ID
+        job_id = f"search_{int(time.time() * 1000)}"
 
-        if not search_results:
-            return render_template('admin_add_song.html', error='לא נמצא שיר ביוטיוב')
+        # Register the search job
+        with jobs_lock:
+            search_jobs[job_id] = {
+                'status': 'pending',
+                'message': 'מכין חיפוש...',
+                'song_name': song_name,
+                'artist_name': artist_name,
+                'created_at': time.time()
+            }
 
-        # Show search results
-        return render_template('admin_search_results.html',
-                             results=search_results,
-                             song_name=song_name,
-                             artist_name=artist_name)
+        # Start background search thread
+        thread = threading.Thread(
+            target=background_search_job,
+            args=(job_id, song_name, artist_name),
+            daemon=True
+        )
+        thread.start()
+
+        # Redirect to waiting page
+        return redirect(url_for('admin_search_waiting', job_id=job_id))
 
     return render_template('admin_add_song.html')
+
+
+@app.route('/admin/search-waiting/<job_id>')
+def admin_search_waiting(job_id):
+    """Waiting page for search results."""
+    if 'admin' not in session:
+        return redirect(url_for('admin_login'))
+
+    with jobs_lock:
+        job = search_jobs.get(job_id)
+        if not job:
+            return redirect(url_for('admin_add_song'))
+
+    return render_template('admin_search_waiting.html', job_id=job_id,
+                         song_name=job['song_name'], artist_name=job['artist_name'])
+
+
+@app.route('/admin/search-status/<job_id>')
+def admin_search_status(job_id):
+    """Get status of a search job (JSON API)."""
+    if 'admin' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    with jobs_lock:
+        job = search_jobs.get(job_id)
+        if not job:
+            return jsonify({'error': 'Job not found'}), 404
+
+        response = {
+            'status': job['status'],
+            'message': job['message'],
+        }
+
+        if job['status'] == 'completed' and 'results' in job:
+            response['results'] = job['results']
+
+        return jsonify(response)
+
+
+@app.route('/admin/search-results/<job_id>')
+def admin_search_results(job_id):
+    """Display search results from completed search job."""
+    if 'admin' not in session:
+        return redirect(url_for('admin_login'))
+
+    with jobs_lock:
+        job = search_jobs.get(job_id)
+        if not job or job['status'] != 'completed' or 'results' not in job:
+            return redirect(url_for('admin_add_song'))
+
+        results = job['results']
+        song_name = job['song_name']
+        artist_name = job['artist_name']
+
+    return render_template('admin_search_results.html',
+                         results=results,
+                         song_name=song_name,
+                         artist_name=artist_name)
 
 
 @app.route('/admin/download-song', methods=['POST'])
