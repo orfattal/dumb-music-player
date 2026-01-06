@@ -60,6 +60,14 @@
 </div>
 
 <script>
+// Hide overlay on page load (in case of error/page reload)
+window.onload = function() {
+    var overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+        overlay.style.display = 'none';
+    }
+};
+
 function prepareDownload() {
     var selected = document.querySelector('input[name="selected_video"]:checked');
     if (!selected) {
