@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Music Playlists{% endblock %}
+
+{% block content %}
+<div class="nav">
+    <h1>Music Playlists</h1>
+</div>
+
+{% if playlists %}
+    {% for playlist in playlists %}
+    <div class="playlist-item">
+        <h2>{{ playlist.name }}</h2>
+        <p>{{ playlist.songs|length }} songs</p>
+        <a href="{{ url_for('view_playlist', playlist_id=loop.index0) }}" class="button">View Songs</a>
+    </div>
+    {% endfor %}
+{% else %}
+    <p>No playlists available yet.</p>
+{% endif %}
+
+<br><br>
+<a href="{{ url_for('admin_login') }}">Admin Login</a>
+{% endblock %}

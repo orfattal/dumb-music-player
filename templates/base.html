@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Music Player{% endblock %}</title>
+    <style>
+        /* Minimal CSS optimized for Opera Mini */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+            background: #fff;
+            color: #000;
+        }
+        h1, h2, h3 {
+            margin: 10px 0;
+        }
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        a:visited {
+            color: #551a8b;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .playlist-item {
+            border: 1px solid #ccc;
+            margin: 10px 0;
+            padding: 10px;
+        }
+        .song-item {
+            border-bottom: 1px solid #eee;
+            padding: 10px 0;
+        }
+        .button {
+            display: inline-block;
+            padding: 8px 15px;
+            background: #0066cc;
+            color: #fff;
+            border: none;
+            margin: 5px 0;
+        }
+        .button-danger {
+            background: #cc0000;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        .error {
+            color: #cc0000;
+            padding: 10px;
+            border: 1px solid #cc0000;
+            margin: 10px 0;
+        }
+        .nav {
+            border-bottom: 2px solid #ccc;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>
