@@ -13,7 +13,7 @@
 <div class="error">{{ error }}</div>
 {% endif %}
 
-<form method="POST">
+<form method="POST" onsubmit="showSearchLoading()">
     <label>שם השיר:</label>
     <input type="text" name="song_name" required placeholder="Shape of You">
 
@@ -21,8 +21,17 @@
     <input type="text" name="artist_name" required placeholder="Ed Sheeran">
 
     <br>
-    <button type="submit" class="button">🔍 חפש ביוטיוב</button>
+    <button type="submit" class="button" id="searchButton">🔍 חפש ביוטיוב</button>
 </form>
+
+<script>
+function showSearchLoading() {
+    var btn = document.getElementById('searchButton');
+    btn.disabled = true;
+    btn.innerHTML = '⏳ מחפש...';
+    btn.style.opacity = '0.6';
+}
+</script>
 
 <br>
 <p><small>תראה תוצאות חיפוש עם תמונות ממוזערות. תוכל לבחור את השיר הנכון ולהוריד אותו.</small></p>

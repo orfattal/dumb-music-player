@@ -47,7 +47,7 @@
     {% endfor %}
 
     <br>
-    <button type="submit" class="button" onclick="return prepareDownload()">הורד את השיר הנבחר</button>
+    <button type="submit" class="button" id="downloadButton" onclick="return prepareDownload()">הורד את השיר הנבחר</button>
 </form>
 
 <script>
@@ -78,6 +78,12 @@ function prepareDownload() {
     thumbInput.name = 'youtube_thumbnail';
     thumbInput.value = selected.dataset.thumbnail;
     form.appendChild(thumbInput);
+
+    // Show loading state
+    var btn = document.getElementById('downloadButton');
+    btn.disabled = true;
+    btn.innerHTML = '⏳ מוריד...';
+    btn.style.opacity = '0.6';
 
     return true;
 }
