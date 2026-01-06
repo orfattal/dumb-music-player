@@ -3,7 +3,9 @@ import json
 import re
 import requests
 import yt_dlp
-from flask import Flask, render_template, request, redirect, url_for, session, send_file, jsonify
+import threading
+import time
+from flask import Flask, render_template, request, redirect, url_for, session, send_file, jsonify, flash
 from werkzeug.security import check_password_hash, generate_password_hash
 from dotenv import load_dotenv
 from pathlib import Path
@@ -30,6 +32,10 @@ DATA_FILE = Path('data.json')
 # Initialize data file
 if not DATA_FILE.exists():
     DATA_FILE.write_text(json.dumps({'songs': []}, indent=2))
+
+# Background download jobs tracker
+download_jobs = {}
+jobs_lock = threading.Lock()
 
 
 def load_data():
@@ -162,6 +168,47 @@ def download_from_youtube(youtube_url, output_path, thumbnail_path=None):
     return False
 
 
+def background_download_job(job_id, youtube_url, youtube_title, thumbnail_url, song_name, artist_name, output_path, thumbnail_path):
+    """Background job for downloading from YouTube."""
+    global download_jobs
+
+    try:
+        # Update job status to downloading
+        with jobs_lock:
+            download_jobs[job_id]['status'] = 'downloading'
+            download_jobs[job_id]['message'] = 'מוריד מיוטיוב...'
+
+        # Perform the download
+        success = download_from_youtube(youtube_url, output_path, thumbnail_path)
+
+        if success:
+            # Add to songs database
+            data = load_data()
+            data['songs'].append({
+                'display_name': youtube_title,
+                'filename': output_path.name,
+                'youtube_url': youtube_url,
+                'thumbnail': thumbnail_path.name if thumbnail_path and thumbnail_path.exists() else None
+            })
+            save_data(data)
+
+            # Update job status to completed
+            with jobs_lock:
+                download_jobs[job_id]['status'] = 'completed'
+                download_jobs[job_id]['message'] = 'השיר נוסף בהצלחה!'
+                download_jobs[job_id]['song_name'] = youtube_title
+        else:
+            # Update job status to failed
+            with jobs_lock:
+                download_jobs[job_id]['status'] = 'failed'
+                download_jobs[job_id]['message'] = 'שגיאה בהורדה מיוטיוב. נסה שוב.'
+    except Exception as e:
+        print(f"Background job error: {e}")
+        with jobs_lock:
+            download_jobs[job_id]['status'] = 'failed'
+            download_jobs[job_id]['message'] = f'שגיאה: {str(e)}'
+
+
 # ============ PUBLIC ROUTES ============
 
 @app.route('/')
@@ -224,12 +271,53 @@ def admin_logout():
 
 @app.route('/admin/dashboard')
 def admin_dashboard():
-    """Admin dashboard showing all songs."""
+    """Admin dashboard showing all songs and active jobs."""
     if 'admin' not in session:
         return redirect(url_for('admin_login'))
 
     data = load_data()
-    return render_template('admin_dashboard.html', songs=data['songs'])
+
+    # Get active and recent jobs (last 5 minutes)
+    recent_jobs = []
+    current_time = time.time()
+    with jobs_lock:
+        for job_id, job_info in list(download_jobs.items()):
+            if current_time - job_info['created_at'] < 300:  # 5 minutes
+                recent_jobs.append({
+                    'id': job_id,
+                    'status': job_info['status'],
+                    'message': job_info['message'],
+                    'song_name': job_info.get('song_name', 'Unknown')
+                })
+            else:
+                # Clean up old jobs
+                del download_jobs[job_id]
+
+    # Check if we should highlight a specific job (from redirect)
+    highlight_job_id = request.args.get('job_id')
+
+    return render_template('admin_dashboard.html',
+                         songs=data['songs'],
+                         jobs=recent_jobs,
+                         highlight_job_id=highlight_job_id)
+
+
+@app.route('/admin/job-status/<job_id>')
+def admin_job_status(job_id):
+    """Get status of a download job (JSON API)."""
+    if 'admin' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    with jobs_lock:
+        job = download_jobs.get(job_id)
+        if not job:
+            return jsonify({'error': 'Job not found'}), 404
+
+        return jsonify({
+            'status': job['status'],
+            'message': job['message'],
+            'song_name': job.get('song_name', 'Unknown')
+        })
 
 
 @app.route('/admin/add-song', methods=['GET', 'POST'])
@@ -262,7 +350,7 @@ def admin_add_song():
 
 @app.route('/admin/download-song', methods=['POST'])
 def admin_download_song():
-    """Download selected song from YouTube."""
+    """Start downloading selected song from YouTube in background."""
     if 'admin' not in session:
         return redirect(url_for('admin_login'))
 
@@ -284,30 +372,30 @@ def admin_download_song():
     video_id = youtube_url.split('watch?v=')[-1]
     thumbnail_filename = f"{video_id}.jpg"
     thumbnail_path = THUMBNAILS_DIR / thumbnail_filename
-
-    # Download from YouTube
     output_path = DOWNLOADS_DIR / filename
-    success = download_from_youtube(youtube_url, output_path, thumbnail_path)
 
-    if not success:
-        search_results = search_youtube(song_name, artist_name)
-        return render_template('admin_search_results.html',
-                             results=search_results,
-                             song_name=song_name,
-                             artist_name=artist_name,
-                             error='שגיאה בהורדה מיוטיוב')
+    # Create a unique job ID
+    job_id = f"job_{int(time.time() * 1000)}"
 
-    # Add to songs list
-    data = load_data()
-    data['songs'].append({
-        'display_name': youtube_title,
-        'filename': filename,
-        'youtube_url': youtube_url,
-        'thumbnail': thumbnail_filename if thumbnail_path.exists() else None
-    })
-    save_data(data)
+    # Register the job
+    with jobs_lock:
+        download_jobs[job_id] = {
+            'status': 'pending',
+            'message': 'מכין הורדה...',
+            'song_name': youtube_title,
+            'created_at': time.time()
+        }
 
-    return redirect(url_for('admin_dashboard'))
+    # Start background download thread
+    thread = threading.Thread(
+        target=background_download_job,
+        args=(job_id, youtube_url, youtube_title, youtube_thumbnail, song_name, artist_name, output_path, thumbnail_path),
+        daemon=True
+    )
+    thread.start()
+
+    # Redirect immediately to dashboard with job ID
+    return redirect(url_for('admin_dashboard', job_id=job_id))
 
 
 @app.route('/admin/song/<int:song_id>/edit', methods=['GET', 'POST'])

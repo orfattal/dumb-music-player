@@ -12,6 +12,92 @@
 
 <a href="{{ url_for('admin_add_song') }}" class="button">+ הוסף שיר חדש</a>
 
+<!-- Active Download Jobs -->
+{% if jobs %}
+<div style="background: #e8f4ff; border: 2px solid #4a90e2; border-radius: 5px; padding: 15px; margin: 20px 0;">
+    <h3 style="margin: 0 0 10px 0;">הורדות פעילות</h3>
+    {% for job in jobs %}
+    <div id="job_{{ job.id }}" style="padding: 10px; background: white; border-radius: 3px; margin-bottom: 10px;">
+        <strong>{{ job.song_name }}</strong><br>
+        <span class="job-status" data-job-id="{{ job.id }}" data-status="{{ job.status }}">
+            {% if job.status == 'pending' %}
+            ⏳ {{ job.message }}
+            {% elif job.status == 'downloading' %}
+            ⬇️ {{ job.message }}
+            {% elif job.status == 'completed' %}
+            ✅ {{ job.message }}
+            {% elif job.status == 'failed' %}
+            ❌ {{ job.message }}
+            {% endif %}
+        </span>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+// Poll for job status updates
+var activeJobs = [{% for job in jobs %}'{{ job.id }}'{% if not loop.last %}, {% endif %}{% endfor %}];
+var pollInterval = null;
+var completedJobs = 0;
+
+function checkJobStatus() {
+    var jobsToCheck = activeJobs.filter(function(jobId) {
+        var statusEl = document.querySelector('[data-job-id="' + jobId + '"]');
+        return statusEl && statusEl.dataset.status !== 'completed' && statusEl.dataset.status !== 'failed';
+    });
+
+    if (jobsToCheck.length === 0) {
+        if (pollInterval) {
+            clearInterval(pollInterval);
+            pollInterval = null;
+        }
+        // Reload page if any jobs completed
+        if (completedJobs > 0) {
+            window.location.reload();
+        }
+        return;
+    }
+
+    jobsToCheck.forEach(function(jobId) {
+        fetch('/admin/job-status/' + jobId)
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                var statusEl = document.querySelector('[data-job-id="' + jobId + '"]');
+                if (statusEl) {
+                    var icon = '⏳';
+                    if (data.status === 'downloading') icon = '⬇️';
+                    else if (data.status === 'completed') {
+                        icon = '✅';
+                        completedJobs++;
+                    }
+                    else if (data.status === 'failed') icon = '❌';
+
+                    statusEl.innerHTML = icon + ' ' + data.message;
+                    statusEl.dataset.status = data.status;
+
+                    // If completed or failed, stop checking after a delay
+                    if (data.status === 'completed' || data.status === 'failed') {
+                        setTimeout(function() {
+                            checkJobStatus();
+                        }, 2000);
+                    }
+                }
+            })
+            .catch(function(error) {
+                console.error('Error checking job status:', error);
+            });
+    });
+}
+
+// Start polling every 2 seconds
+if (activeJobs.length > 0) {
+    pollInterval = setInterval(checkJobStatus, 2000);
+    // Also check immediately
+    checkJobStatus();
+}
+</script>
+{% endif %}
+
 <h2>שירים</h2>
 
 {% if songs %}
