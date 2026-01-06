@@ -4,6 +4,7 @@ import re
 import requests
 import yt_dlp
 import sys
+import time
 from flask import Flask, render_template, request, redirect, url_for, session, send_file, jsonify
 from werkzeug.security import check_password_hash, generate_password_hash
 from dotenv import load_dotenv
@@ -18,6 +19,13 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key')
 ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'admin')
+
+# Log EVERY request before it reaches any route
+@app.before_request
+def log_request():
+    print(f"\n>>> [MIDDLEWARE] Request received: {request.method} {request.path}", flush=True)
+    print(f">>> [MIDDLEWARE] Time: {time.time()}", flush=True)
+    sys.stdout.flush()
 
 # Add ngrok skip warning header to all responses
 @app.after_request

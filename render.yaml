@@ -3,7 +3,7 @@ services:
     name: dumb-music-player
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    startCommand: gunicorn --workers 4 --timeout 300 --bind 0.0.0.0:$PORT app:app
     envVars:
       - key: ADMIN_PASSWORD
         sync: false
