@@ -73,10 +73,8 @@ def save_data(data):
         json.dump(data, f, indent=2, ensure_ascii=False)
 
 
-def search_youtube(song_name, artist_name, num_results=5):
+def search_youtube(query, num_results=5):
     """Search YouTube for a song and return top results with metadata."""
-    query = f"{song_name} {artist_name}"
-
     ydl_opts = {
         'quiet': True,
         'no_warnings': True,
@@ -315,21 +313,19 @@ def admin_add_song():
         print("SEARCH REQUEST STARTED", flush=True)
         print("="*80, flush=True)
 
-        song_name = request.form.get('song_name')
-        artist_name = request.form.get('artist_name')
+        search_query = request.form.get('search_query', '').strip()
 
-        print(f"Song Name: {song_name}", flush=True)
-        print(f"Artist Name: {artist_name}", flush=True)
+        print(f"Search Query: {search_query}", flush=True)
 
-        if not song_name or not artist_name:
-            print("ERROR: Missing song_name or artist_name", flush=True)
-            return render_template('admin_add_song.html', error='נא למלא שם שיר ושם אמן')
+        if not search_query:
+            print("ERROR: Missing search_query", flush=True)
+            return render_template('admin_add_song.html', error='נא למלא שדה חיפוש')
 
         # Search YouTube
         print("\n>>> CALLING search_youtube()...", flush=True)
         import time
         start_time = time.time()
-        search_results = search_youtube(song_name, artist_name)
+        search_results = search_youtube(search_query)
         elapsed_time = time.time() - start_time
         print(f"<<< search_youtube() COMPLETED in {elapsed_time:.2f} seconds", flush=True)
         print(f"Found {len(search_results)} results", flush=True)
@@ -339,14 +335,15 @@ def admin_add_song():
             return render_template('admin_add_song.html', error='לא נמצא שיר ביוטיוב')
 
         # Show search results
+        # For backward compatibility with the template, we'll pass the query as both song_name and artist_name
         print("\n>>> Rendering search results page...", flush=True)
         print("="*80, flush=True)
         print("SEARCH REQUEST COMPLETED", flush=True)
         print("="*80 + "\n", flush=True)
         return render_template('admin_search_results.html',
                              results=search_results,
-                             song_name=song_name,
-                             artist_name=artist_name)
+                             song_name=search_query,
+                             artist_name='')
 
     return render_template('admin_add_song.html')
 
@@ -381,11 +378,13 @@ def admin_download_song():
     youtube_url = request.form.get('youtube_url')
     youtube_title = request.form.get('youtube_title')
     youtube_thumbnail = request.form.get('youtube_thumbnail')
-    song_name = request.form.get('song_name')
-    artist_name = request.form.get('artist_name')
+    song_name = request.form.get('song_name', '')
+    artist_name = request.form.get('artist_name', '')
 
-    print(f"Song Name: {song_name}", flush=True)
-    print(f"Artist Name: {artist_name}", flush=True)
+    # Combine song_name and artist_name if both exist, otherwise use just song_name
+    search_query = f"{song_name} {artist_name}".strip() if artist_name else song_name
+
+    print(f"Search Query: {search_query}", flush=True)
     print(f"YouTube URL: {youtube_url}", flush=True)
     print(f"YouTube Title: {youtube_title}", flush=True)
 
@@ -393,8 +392,8 @@ def admin_download_song():
         print("ERROR: Missing youtube_url or youtube_title", flush=True)
         return redirect(url_for('admin_add_song'))
 
-    # Generate filename
-    safe_name = re.sub(r'[^\w\s-]', '', f"{song_name}-{artist_name}")
+    # Generate filename from search query
+    safe_name = re.sub(r'[^\w\s-]', '', search_query)
     safe_name = re.sub(r'[-\s]+', '-', safe_name)
     filename = f"{safe_name}.mp3"
 
@@ -420,11 +419,11 @@ def admin_download_song():
 
     if not success:
         print("ERROR: Download failed, re-rendering search results", flush=True)
-        search_results = search_youtube(song_name, artist_name)
+        search_results = search_youtube(search_query)
         return render_template('admin_search_results.html',
                              results=search_results,
-                             song_name=song_name,
-                             artist_name=artist_name,
+                             song_name=search_query,
+                             artist_name='',
                              error='שגיאה בהורדה מיוטיוב. אולי צריך לעדכן cookies?')
 
     print("\n>>> Adding song to database...", flush=True)

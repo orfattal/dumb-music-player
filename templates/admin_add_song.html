@@ -14,11 +14,11 @@
 {% endif %}
 
 <form method="POST" onsubmit="showSearchLoading()">
-    <label>שם השיר:</label>
-    <input type="text" name="song_name" required placeholder="Shape of You">
-
-    <label>שם האמן:</label>
-    <input type="text" name="artist_name" required placeholder="Ed Sheeran">
+    <label>חיפוש שיר (שם השיר + אמן):</label>
+    <input type="text" name="search_query" required placeholder='דוגמה: Shape of You Ed Sheeran או "הדג נחש לא פריארים"' style="font-size: 16px;">
+    <small style="display: block; margin-top: 5px; color: #666;">
+        הכנס את שם השיר והאמן במקום אחד. לדוגמה: "Shape of You Ed Sheeran"
+    </small>
 
     <br>
     <button type="submit" class="button" id="searchButton">🔍 חפש ביוטיוב</button>

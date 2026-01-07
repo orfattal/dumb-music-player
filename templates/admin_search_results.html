@@ -8,18 +8,11 @@
     <a href="{{ url_for('admin_dashboard') }}">לוח הבקרה</a>
 </div>
 
-<h1>תוצאות חיפוש: {{ song_name }} - {{ artist_name }}</h1>
+<h1>תוצאות חיפוש: {{ song_name }}</h1>
 
 {% if error %}
 <div class="error">{{ error }}</div>
 {% endif %}
-
-<!-- Debug Test Button -->
-<div style="background: #fff3cd; border: 1px solid #ffc107; padding: 10px; margin: 10px 0; border-radius: 5px;">
-    <strong>🔧 Debug Test:</strong>
-    <button onclick="testPing()" style="margin-right: 10px; padding: 5px 15px;">Test Server Connection</button>
-    <span id="pingResult"></span>
-</div>
 
 <p>בחר את הסרטון המתאים:</p>
 
@@ -86,34 +79,6 @@ window.onload = function() {
         downloadTimer = null;
     }
 };
-
-// Test server connectivity
-function testPing() {
-    console.log('[TEST] Sending POST to /admin/ping');
-    document.getElementById('pingResult').textContent = '⏳ Testing...';
-
-    fetch('/admin/ping', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: 'test=1'
-    })
-    .then(response => {
-        console.log('[TEST] Response status:', response.status);
-        return response.json();
-    })
-    .then(data => {
-        console.log('[TEST] Response data:', data);
-        document.getElementById('pingResult').textContent = '✅ Server reachable! Status: ' + data.status;
-        document.getElementById('pingResult').style.color = 'green';
-    })
-    .catch(error => {
-        console.error('[TEST] Error:', error);
-        document.getElementById('pingResult').textContent = '❌ Failed: ' + error.message;
-        document.getElementById('pingResult').style.color = 'red';
-    });
-}
 
 function dismissOverlay() {
     document.getElementById('loadingOverlay').style.display = 'none';
