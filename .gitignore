@@ -1,9 +1,7 @@
 .env
-*.mp3
-downloads/
-data.json
 __pycache__/
 *.pyc
 .DS_Store
-cookies.txt
-data.json.backup
+
+# Persistent data directory (mounted as disk in Render)
+persistent_data/

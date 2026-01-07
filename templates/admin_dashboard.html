@@ -24,7 +24,7 @@
             <tr>
                 <td width="90" valign="top">
                     {% if song.thumbnail %}
-                    <img src="{{ url_for('static', filename='thumbnails/' + song.thumbnail) }}" alt="{{ song.display_name }}" width="80" height="60" style="border-radius: 5px;">
+                    <img src="{{ url_for('serve_thumbnail', filename=song.thumbnail) }}" alt="{{ song.display_name }}" width="80" height="60" style="border-radius: 5px;">
                     {% else %}
                     <div style="width: 80px; height: 60px; background: #f0f0f0; text-align: center; line-height: 60px; font-size: 30px; border-radius: 5px;">🎵</div>
                     {% endif %}

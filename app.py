@@ -33,16 +33,32 @@ def add_ngrok_header(response):
     response.headers['ngrok-skip-browser-warning'] = 'true'
     return response
 
-# Directories
-DOWNLOADS_DIR = Path('downloads')
+# Persistent Data Directory
+# This folder will be mounted as a persistent disk in Render
+PERSISTENT_DATA_DIR = Path(os.getenv('PERSISTENT_DATA_PATH', 'persistent_data'))
+PERSISTENT_DATA_DIR.mkdir(exist_ok=True)
+
+# Subdirectories for different types of data
+DOWNLOADS_DIR = PERSISTENT_DATA_DIR / 'downloads'
 DOWNLOADS_DIR.mkdir(exist_ok=True)
-THUMBNAILS_DIR = Path('static/thumbnails')
-THUMBNAILS_DIR.mkdir(parents=True, exist_ok=True)
-DATA_FILE = Path('data.json')
+
+THUMBNAILS_DIR = PERSISTENT_DATA_DIR / 'thumbnails'
+THUMBNAILS_DIR.mkdir(exist_ok=True)
+
+DATA_FILE = PERSISTENT_DATA_DIR / 'data.json'
 
 # Initialize data file
 if not DATA_FILE.exists():
     DATA_FILE.write_text(json.dumps({'songs': []}, indent=2))
+
+# Cookies file path (also in persistent storage)
+COOKIES_FILE = PERSISTENT_DATA_DIR / 'cookies.txt'
+
+print(f"[INIT] Persistent data directory: {PERSISTENT_DATA_DIR.absolute()}", flush=True)
+print(f"[INIT] Downloads directory: {DOWNLOADS_DIR.absolute()}", flush=True)
+print(f"[INIT] Thumbnails directory: {THUMBNAILS_DIR.absolute()}", flush=True)
+print(f"[INIT] Data file: {DATA_FILE.absolute()}", flush=True)
+print(f"[INIT] Cookies file: {COOKIES_FILE.absolute()}", flush=True)
 
 
 def load_data():
@@ -93,8 +109,7 @@ def download_from_youtube(youtube_url, output_path, thumbnail_path=None):
     print(f"  [download_from_youtube] Starting download for: {youtube_url}", flush=True)
 
     # Check if cookies file exists
-    cookies_file = Path('cookies.txt')
-    print(f"  [download_from_youtube] Checking for cookies.txt... {'FOUND' if cookies_file.exists() else 'NOT FOUND'}", flush=True)
+    print(f"  [download_from_youtube] Checking for cookies.txt at {COOKIES_FILE}... {'FOUND' if COOKIES_FILE.exists() else 'NOT FOUND'}", flush=True)
 
     ydl_opts = {
         'format': 'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best',
@@ -114,9 +129,9 @@ def download_from_youtube(youtube_url, output_path, thumbnail_path=None):
     strategies = []
 
     # Strategy 1: Use cookies.txt if it exists
-    if cookies_file.exists():
+    if COOKIES_FILE.exists():
         strategy_opts = ydl_opts.copy()
-        strategy_opts['cookiefile'] = str(cookies_file)
+        strategy_opts['cookiefile'] = str(COOKIES_FILE)
         strategies.append(("cookies.txt file", strategy_opts))
 
     # Strategy 2: Try Chrome browser cookies (only works locally)
@@ -233,6 +248,20 @@ def download_song(song_id):
         as_attachment=True,
         download_name=song['filename'],
         mimetype='audio/mpeg'
+    )
+
+
+@app.route('/thumbnails/<path:filename>')
+def serve_thumbnail(filename):
+    """Serve thumbnail images from persistent storage."""
+    thumbnail_path = THUMBNAILS_DIR / filename
+
+    if not thumbnail_path.exists():
+        return "תמונה לא נמצאה", 404
+
+    return send_file(
+        thumbnail_path,
+        mimetype='image/jpeg'
     )
 
 
@@ -477,13 +506,12 @@ def admin_cookies():
     if 'admin' not in session:
         return redirect(url_for('admin_login'))
 
-    cookies_file = Path('cookies.txt')
     current_cookies = None
-    cookies_exist = cookies_file.exists()
+    cookies_exist = COOKIES_FILE.exists()
 
     if cookies_exist:
         try:
-            current_cookies = cookies_file.read_text()
+            current_cookies = COOKIES_FILE.read_text()
             # Only show first 500 chars for preview
             if len(current_cookies) > 500:
                 current_cookies = current_cookies[:500] + '\n... (truncated)'
@@ -512,7 +540,7 @@ def admin_cookies():
 
             # Save cookies.txt
             try:
-                cookies_file.write_text(cookies_content)
+                COOKIES_FILE.write_text(cookies_content)
                 print(f"✓ cookies.txt updated successfully ({len(cookies_content)} bytes)", flush=True)
                 return render_template('admin_cookies.html',
                                      success='קובץ cookies.txt עודכן בהצלחה!',
@@ -526,9 +554,9 @@ def admin_cookies():
                                      cookies_exist=cookies_exist)
 
         elif action == 'delete':
-            if cookies_file.exists():
+            if COOKIES_FILE.exists():
                 try:
-                    cookies_file.unlink()
+                    COOKIES_FILE.unlink()
                     print("✓ cookies.txt deleted", flush=True)
                     return render_template('admin_cookies.html',
                                          success='קובץ cookies.txt נמחק בהצלחה',
