@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}ניהול Cookies - YouTube{% endblock %}
+
+{% block content %}
+<div class="nav">
+    <a href="{{ url_for('admin_dashboard') }}">לוח הבקרה</a> |
+    <a href="{{ url_for('admin_add_song') }}">הוסף שיר</a> |
+    <a href="{{ url_for('admin_logout') }}">התנתק</a>
+</div>
+
+<h1>🍪 ניהול Cookies ליוטיוב</h1>
+
+{% if success %}
+<div class="success">{{ success }}</div>
+{% endif %}
+
+{% if error %}
+<div class="error">{{ error }}</div>
+{% endif %}
+
+<div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <h2>מה זה Cookies ולמה צריך אותם?</h2>
+    <p>YouTube Cookies מאפשרים להוריד שירים שמוגבלים גיאוגרפית או דורשים אימות.</p>
+
+    <h3>איך לייצא Cookies מהדפדפן?</h3>
+    <ol style="line-height: 1.8;">
+        <li>התקן את התוסף <strong>"Get cookies.txt LOCALLY"</strong> ב-Chrome/Firefox</li>
+        <li>היכנס ל-YouTube בדפדפן</li>
+        <li>לחץ על אייקון התוסף בעת שאתה באתר YouTube</li>
+        <li>לחץ על <strong>"Export"</strong> או <strong>"Copy to Clipboard"</strong></li>
+        <li>הדבק את התוכן בתיבת הטקסט למטה</li>
+    </ol>
+
+    <p style="margin-top: 15px;">
+        <strong>קישורים לתוספים:</strong><br>
+        • <a href="https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc" target="_blank">Chrome Web Store</a><br>
+        • <a href="https://addons.mozilla.org/en-US/firefox/addon/cookies-txt/" target="_blank">Firefox Add-ons</a>
+    </p>
+</div>
+
+{% if cookies_exist %}
+<div style="background: #d4edda; border: 1px solid #c3e6cb; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+    <h3 style="margin-top: 0; color: #155724;">✅ קובץ Cookies קיים במערכת</h3>
+    <details>
+        <summary style="cursor: pointer; font-weight: bold; padding: 10px; background: #f8f9fa; border-radius: 5px;">הצג תצוגה מקדימה (500 תווים ראשונים)</summary>
+        <pre style="background: #f8f9fa; padding: 15px; border-radius: 5px; overflow-x: auto; margin-top: 10px; font-size: 12px; direction: ltr; text-align: left;">{{ current_cookies }}</pre>
+    </details>
+</div>
+{% else %}
+<div style="background: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+    <p style="margin: 0; color: #856404;">⚠️ אין קובץ cookies במערכת. ההורדות עשויות להיכשל עבור סרטונים מוגבלים.</p>
+</div>
+{% endif %}
+
+<form method="POST" style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <input type="hidden" name="action" value="update">
+
+    <h3>העלה/הדבק Cookies חדש</h3>
+
+    <label for="cookies_content" style="display: block; margin-bottom: 10px; font-weight: bold;">
+        תוכן cookies.txt (פורמט Netscape):
+    </label>
+
+    <textarea
+        id="cookies_content"
+        name="cookies_content"
+        rows="15"
+        placeholder="# Netscape HTTP Cookie File
+# This is a generated file! Do not edit.
+
+.youtube.com	TRUE	/	TRUE	1234567890	CONSENT	YES+cb
+.youtube.com	TRUE	/	FALSE	1234567890	VISITOR_INFO1_LIVE	abcdefg123
+..."
+        style="font-family: monospace; font-size: 14px; direction: ltr; text-align: left; white-space: pre; overflow-x: auto;"
+    >{{ current_cookies if current_cookies and not '... (truncated)' in current_cookies else '' }}</textarea>
+
+    <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <button type="submit" class="button">
+            💾 שמור Cookies
+        </button>
+
+        <button type="button" class="button" onclick="document.getElementById('fileInput').click()" style="background: #6c757d;">
+            📁 בחר קובץ מהמחשב
+        </button>
+
+        <input type="file" id="fileInput" accept=".txt" style="display: none;" onchange="loadFile(event)">
+    </div>
+</form>
+
+{% if cookies_exist %}
+<form method="POST" style="margin-top: 20px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <input type="hidden" name="action" value="delete">
+    <h3>מחק Cookies</h3>
+    <p>מחיקת הקובץ תגרום לשימוש בהורדות ללא אימות (עשוי לכשול עבור סרטונים מוגבלים).</p>
+    <button type="submit" class="button button-danger" onclick="return confirm('האם אתה בטוח שברצונך למחוק את קובץ ה-cookies?')">
+        🗑️ מחק קובץ Cookies
+    </button>
+</form>
+{% endif %}
+
+<script>
+function loadFile(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const contents = e.target.result;
+            document.getElementById('cookies_content').value = contents;
+
+            // Show success message
+            const fileInput = document.getElementById('fileInput');
+            fileInput.parentElement.innerHTML += '<span style="color: green; margin-right: 10px;">✓ קובץ נטען בהצלחה!</span>';
+
+            console.log('[COOKIES] File loaded:', file.name, contents.length, 'bytes');
+        };
+        reader.onerror = function(e) {
+            alert('שגיאה בקריאת הקובץ');
+            console.error('[COOKIES] Error reading file:', e);
+        };
+        reader.readAsText(file);
+    }
+}
+</script>
+
+{% endblock %}

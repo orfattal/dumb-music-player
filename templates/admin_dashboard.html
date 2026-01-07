@@ -10,7 +10,10 @@
 
 <h1>ניהול שירים</h1>
 
-<a href="{{ url_for('admin_add_song') }}" class="button">+ הוסף שיר חדש</a>
+<div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+    <a href="{{ url_for('admin_add_song') }}" class="button">+ הוסף שיר חדש</a>
+    <a href="{{ url_for('admin_cookies') }}" class="button" style="background: #28a745;">🍪 ניהול Cookies</a>
+</div>
 
 <h2>שירים</h2>
 

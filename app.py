@@ -471,6 +471,81 @@ def admin_delete_song(song_id):
     return redirect(url_for('admin_dashboard'))
 
 
+@app.route('/admin/cookies', methods=['GET', 'POST'])
+def admin_cookies():
+    """Manage cookies.txt file for YouTube authentication."""
+    if 'admin' not in session:
+        return redirect(url_for('admin_login'))
+
+    cookies_file = Path('cookies.txt')
+    current_cookies = None
+    cookies_exist = cookies_file.exists()
+
+    if cookies_exist:
+        try:
+            current_cookies = cookies_file.read_text()
+            # Only show first 500 chars for preview
+            if len(current_cookies) > 500:
+                current_cookies = current_cookies[:500] + '\n... (truncated)'
+        except Exception as e:
+            print(f"Error reading cookies.txt: {e}", flush=True)
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+
+        if action == 'update':
+            cookies_content = request.form.get('cookies_content', '').strip()
+
+            if not cookies_content:
+                return render_template('admin_cookies.html',
+                                     error='תוכן ה-cookies ריק',
+                                     current_cookies=current_cookies,
+                                     cookies_exist=cookies_exist)
+
+            # Basic validation - check if it looks like Netscape cookie format
+            lines = [line.strip() for line in cookies_content.split('\n') if line.strip()]
+            if not any(line.startswith('#') or '\t' in line for line in lines):
+                return render_template('admin_cookies.html',
+                                     error='הפורמט של ה-cookies נראה לא תקין. צריך להיות בפורמט Netscape',
+                                     current_cookies=current_cookies,
+                                     cookies_exist=cookies_exist)
+
+            # Save cookies.txt
+            try:
+                cookies_file.write_text(cookies_content)
+                print(f"✓ cookies.txt updated successfully ({len(cookies_content)} bytes)", flush=True)
+                return render_template('admin_cookies.html',
+                                     success='קובץ cookies.txt עודכן בהצלחה!',
+                                     current_cookies=cookies_content[:500] + '\n... (truncated)' if len(cookies_content) > 500 else cookies_content,
+                                     cookies_exist=True)
+            except Exception as e:
+                print(f"Error writing cookies.txt: {e}", flush=True)
+                return render_template('admin_cookies.html',
+                                     error=f'שגיאה בשמירת הקובץ: {str(e)}',
+                                     current_cookies=current_cookies,
+                                     cookies_exist=cookies_exist)
+
+        elif action == 'delete':
+            if cookies_file.exists():
+                try:
+                    cookies_file.unlink()
+                    print("✓ cookies.txt deleted", flush=True)
+                    return render_template('admin_cookies.html',
+                                         success='קובץ cookies.txt נמחק בהצלחה',
+                                         current_cookies=None,
+                                         cookies_exist=False)
+                except Exception as e:
+                    print(f"Error deleting cookies.txt: {e}", flush=True)
+                    return render_template('admin_cookies.html',
+                                         error=f'שגיאה במחיקת הקובץ: {str(e)}',
+                                         current_cookies=current_cookies,
+                                         cookies_exist=cookies_exist)
+
+    return render_template('admin_cookies.html',
+                         current_cookies=current_cookies,
+                         cookies_exist=cookies_exist)
+
+
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 8080))
     app.run(debug=True, host='0.0.0.0', port=port)
