@@ -32,9 +32,9 @@
                 <td valign="top">
                     <strong>{{ song.display_name }}</strong>
                     <br><br>
-                    <a href="{{ url_for('admin_edit_song', song_id=loop.index0) }}" class="button">ערוך</a>
+                    <a href="{{ url_for('admin_edit_song', song_id=loop.index0) }}" class="button" style="display: inline-block; min-width: 80px; text-align: center;">ערוך</a>
                     <form method="POST" action="{{ url_for('admin_delete_song', song_id=loop.index0) }}" style="display:inline;">
-                        <button type="submit" class="button button-danger" onclick="return confirm('למחוק את השיר?')">מחק</button>
+                        <button type="submit" class="button button-danger" style="display: inline-block; min-width: 80px; text-align: center;" onclick="return confirm('למחוק את השיר?')">מחק</button>
                     </form>
                 </td>
             </tr>
